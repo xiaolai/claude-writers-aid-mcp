@@ -632,11 +632,21 @@ function handleConfigShow(): string {
 
   if (Object.keys(sources.env).length > 0) {
     output += chalk.green("✓ Environment Variables:\n");
-    if (sources.env.provider) output += `  EMBEDDING_PROVIDER=${sources.env.provider}\n`;
-    if (sources.env.model) output += `  EMBEDDING_MODEL=${sources.env.model}\n`;
-    if (sources.env.dimensions) output += `  EMBEDDING_DIMENSIONS=${sources.env.dimensions}\n`;
-    if (sources.env.baseUrl) output += `  EMBEDDING_BASE_URL=${sources.env.baseUrl}\n`;
-    if (sources.env.apiKey) output += `  OPENAI_API_KEY=***\n`;
+    if (sources.env.provider) {
+      output += `  EMBEDDING_PROVIDER=${sources.env.provider}\n`;
+    }
+    if (sources.env.model) {
+      output += `  EMBEDDING_MODEL=${sources.env.model}\n`;
+    }
+    if (sources.env.dimensions) {
+      output += `  EMBEDDING_DIMENSIONS=${sources.env.dimensions}\n`;
+    }
+    if (sources.env.baseUrl) {
+      output += `  EMBEDDING_BASE_URL=${sources.env.baseUrl}\n`;
+    }
+    if (sources.env.apiKey) {
+      output += `  OPENAI_API_KEY=***\n`;
+    }
     output += "\n";
   }
 

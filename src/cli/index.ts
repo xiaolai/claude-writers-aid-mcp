@@ -38,12 +38,16 @@ export class ConversationMemoryCLI {
       const trimmed = line.trim();
 
       if (!trimmed) {
-        this.rl!.prompt();
+        if (this.rl) {
+          this.rl.prompt();
+        }
         return;
       }
 
       await this.handleCommand(trimmed);
-      this.rl!.prompt();
+      if (this.rl) {
+        this.rl.prompt();
+      }
     });
 
     this.rl.on("close", () => {
@@ -54,7 +58,9 @@ export class ConversationMemoryCLI {
     // Handle Ctrl+C gracefully
     this.rl.on("SIGINT", () => {
       console.log(chalk.yellow("\nUse 'exit' or Ctrl+D to quit"));
-      this.rl!.prompt();
+      if (this.rl) {
+        this.rl.prompt();
+      }
     });
   }
 
@@ -93,7 +99,9 @@ export class ConversationMemoryCLI {
   async start() {
     this.setupREPL();
     showWelcome();
-    this.rl!.prompt();
+    if (this.rl) {
+      this.rl.prompt();
+    }
   }
 
   /**

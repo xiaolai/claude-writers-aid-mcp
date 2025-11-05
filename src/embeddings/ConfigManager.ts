@@ -123,13 +123,14 @@ export class ConfigManager {
         config.embedding.model = value;
         break;
 
-      case "dimensions":
+      case "dimensions": {
         const dims = parseInt(value, 10);
         if (isNaN(dims) || dims < 1 || dims > 10000) {
           throw new Error("Dimensions must be a number between 1 and 10000");
         }
         config.embedding.dimensions = dims;
         break;
+      }
 
       case "baseUrl":
       case "base_url":

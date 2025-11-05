@@ -41,24 +41,27 @@ async function main() {
   const args = process.argv.slice(2).filter((arg) => arg !== "--server");
 
   switch (mode) {
-    case "mcp":
+    case "mcp": {
       // MCP Server Mode (for Claude Code CLI integration)
       const mcpServer = new ConversationMemoryServer();
       await mcpServer.start();
       break;
+    }
 
-    case "single-command":
+    case "single-command": {
       // Single Command Mode
       const singleCLI = new ConversationMemoryCLI();
       await singleCLI.runSingleCommand(args.join(" "));
       break;
+    }
 
     case "cli":
-    default:
+    default: {
       // Interactive REPL Mode
       const repl = new ConversationMemoryCLI();
       await repl.start();
       break;
+    }
   }
 }
 
