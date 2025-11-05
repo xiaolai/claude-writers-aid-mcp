@@ -41,7 +41,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/xiaolai/claude-conversation-memory-mcp.git"
+    "url": "git+https://github.com/xiaolai/claude-conversation-memory-mcp.git"
   },
   "bugs": {
     "url": "https://github.com/xiaolai/claude-conversation-memory-mcp/issues"
