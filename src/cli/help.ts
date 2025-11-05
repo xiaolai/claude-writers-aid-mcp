@@ -13,7 +13,7 @@ export function showWelcome() {
   const shortPath = dbPath.replace(process.env.HOME || "", "~");
 
   console.log(chalk.cyan("┌─────────────────────────────────────────────────────────┐"));
-  console.log(chalk.cyan("│") + " Claude Conversation Memory v0.1.0                       " + chalk.cyan("│"));
+  console.log(chalk.cyan("│") + " Claude Conversation Memory v0.2.0                       " + chalk.cyan("│"));
   console.log(chalk.cyan("│") + ` Database: ${shortPath.padEnd(39)} ` + chalk.cyan("│"));
   console.log(chalk.cyan("│") + " Type 'help' for commands or 'exit' to quit             " + chalk.cyan("│"));
   console.log(chalk.cyan("└─────────────────────────────────────────────────────────┘"));
@@ -25,7 +25,7 @@ export function showWelcome() {
  */
 export function showHelp(): string {
   return `
-${chalk.bold("Claude Conversation Memory v0.1.0 - Interactive CLI")}
+${chalk.bold("Claude Conversation Memory v0.2.0 - Interactive CLI")}
 
 ${chalk.bold("CATEGORIES:")}
 

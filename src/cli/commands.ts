@@ -70,7 +70,7 @@ export async function executeCommand(
 
   // Handle version
   if (command === "version") {
-    return chalk.cyan("Claude Conversation Memory v0.1.0");
+    return chalk.cyan("Claude Conversation Memory v0.2.0");
   }
 
   // Handle status/stats
