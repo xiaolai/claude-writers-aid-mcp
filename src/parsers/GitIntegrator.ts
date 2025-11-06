@@ -1,40 +1,125 @@
 /**
- * Git Integrator
- * Links git commits to conversations based on temporal and contextual analysis
+ * Git Integrator - Links git commits to conversations based on temporal and contextual analysis.
+ *
+ * This integrator connects git repository history with conversation history by:
+ * - Parsing git log to extract commits
+ * - Matching commits to conversations using multiple signals:
+ *   - Temporal proximity (commit time vs conversation time)
+ *   - File overlap (files changed in commit vs files edited in conversation)
+ *   - Branch matching (git branch in commit vs conversation metadata)
+ *   - Decision matching (commit message mentions decisions from conversation)
+ *
+ * Provides confidence scores (0-1) for each linkage based on:
+ * - Exact timestamp match (highest confidence)
+ * - File overlap percentage
+ * - Branch name match
+ * - Decision keyword presence
+ *
+ * Helps answer "WHY was this code changed?" by linking code changes to their
+ * discussion context.
+ *
+ * @example
+ * ```typescript
+ * const integrator = new GitIntegrator('/path/to/project');
+ * const linkedCommits = await integrator.linkCommitsToConversations(
+ *   conversations,
+ *   fileEdits,
+ *   decisions
+ * );
+ * console.log(`Linked ${linkedCommits.filter(c => c.conversation_id).length} commits`);
+ * ```
  */
 
 import simpleGit, { SimpleGit, DefaultLogFields, LogResult } from "simple-git";
 import type { Conversation, FileEdit } from "./ConversationParser.js";
 import type { Decision } from "./DecisionExtractor.js";
 
+/**
+ * Represents a git commit with conversation linkage.
+ */
 export interface GitCommit {
+  /** Short commit hash (7 chars) or full hash */
   hash: string;
+  /** Commit message */
   message: string;
+  /** Commit author */
   author?: string;
+  /** Commit timestamp */
   timestamp: number;
+  /** Git branch name */
   branch?: string;
+  /** Files modified in this commit */
   files_changed: string[];
+  /** Linked conversation ID (if matched) */
   conversation_id?: string;
+  /** Related message ID within the conversation */
   related_message_id?: string;
+  /** Additional commit metadata */
   metadata: Record<string, unknown>;
 }
 
+/**
+ * Represents a commit-to-conversation linkage with confidence score.
+ * @internal
+ */
 export interface CommitLinkage {
+  /** The git commit */
   commit: GitCommit;
+  /** The matched conversation */
   conversation: Conversation;
-  confidence: number; // 0-1 score
+  /** Confidence score (0-1) of the match */
+  confidence: number;
+  /** Reasons why this match was made */
   reasons: string[];
 }
 
+/**
+ * Integrates git repository history with conversation history.
+ *
+ * Links commits to conversations using temporal and contextual analysis.
+ */
 export class GitIntegrator {
   private git: SimpleGit;
 
+  /**
+   * Create a new GitIntegrator.
+   *
+   * @param projectPath - Path to the git repository
+   * @throws {Error} If the directory is not a git repository
+   */
   constructor(projectPath: string) {
     this.git = simpleGit(projectPath);
   }
 
   /**
-   * Parse git history and link to conversations
+   * Parse git history and link commits to conversations.
+   *
+   * Analyzes git log and matches commits to conversations using multiple signals:
+   * - Temporal proximity (commits made during conversation timeframe)
+   * - File overlap (files changed in commit match files edited in conversation)
+   * - Branch matching (git branch matches conversation metadata)
+   * - Decision context (commit message references decisions from conversation)
+   *
+   * Only creates links with confidence > 0.3 to avoid false positives.
+   *
+   * @param conversations - Array of conversations to match against
+   * @param fileEdits - Array of file edits from conversations
+   * @param decisions - Array of decisions that may be referenced in commits
+   * @returns Array of GitCommit objects with conversation_id set for matches
+   *
+   * @example
+   * ```typescript
+   * const integrator = new GitIntegrator('/path/to/project');
+   * const commits = await integrator.linkCommitsToConversations(
+   *   conversations,
+   *   fileEdits,
+   *   decisions
+   * );
+   *
+   * // Find commits linked to a specific conversation
+   * const convCommits = commits.filter(c => c.conversation_id === 'conv-123');
+   * console.log(`${convCommits.length} commits for this conversation`);
+   * ```
    */
   async linkCommitsToConversations(
     conversations: Conversation[],

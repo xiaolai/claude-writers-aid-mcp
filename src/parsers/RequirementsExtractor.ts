@@ -1,33 +1,80 @@
 /**
- * Requirements and Validations Extractor
- * Tracks constraints, dependencies, and testing context
+ * Requirements and Validations Extractor - Tracks constraints, dependencies, and testing context.
+ *
+ * This extractor analyzes conversation messages and tool executions to identify:
+ * - Requirements (dependencies, performance, compatibility, business constraints)
+ * - Validations (test runs, results, and performance data)
+ *
+ * Helps document:
+ * - What dependencies are required and why
+ * - Performance requirements and constraints
+ * - Compatibility requirements (versions, platforms)
+ * - Business rules and limitations
+ * - Test executions and their results
+ *
+ * @example
+ * ```typescript
+ * const extractor = new RequirementsExtractor();
+ * const requirements = extractor.extractRequirements(messages);
+ * const validations = extractor.extractValidations(toolUses, toolResults, messages);
+ *
+ * console.log(`Found ${requirements.length} requirements`);
+ * console.log(`Found ${validations.length} test validations`);
+ * ```
  */
 
 import { nanoid } from "nanoid";
 import type { Message, ToolUse, ToolResult } from "./ConversationParser.js";
 
+/**
+ * Represents a requirement or constraint for the system.
+ */
 export interface Requirement {
+  /** Unique requirement identifier */
   id: string;
+  /** Category of requirement */
   type: "dependency" | "performance" | "compatibility" | "business";
+  /** Description of the requirement */
   description: string;
+  /** Why this requirement exists */
   rationale?: string;
+  /** Components affected by this requirement */
   affects_components: string[];
+  /** Conversation where requirement was discussed */
   conversation_id: string;
+  /** Message containing the requirement */
   message_id: string;
+  /** When the requirement was documented */
   timestamp: number;
 }
 
+/**
+ * Represents a test validation or verification.
+ */
 export interface Validation {
+  /** Unique validation identifier */
   id: string;
+  /** Conversation where test was run */
   conversation_id: string;
+  /** Description of what was tested */
   what_was_tested: string;
+  /** Command used to run the test */
   test_command?: string;
+  /** Test result status */
   result: "passed" | "failed" | "error";
+  /** Performance metrics from the test */
   performance_data?: Record<string, unknown>;
+  /** Files that were tested */
   files_tested: string[];
+  /** When the test was run */
   timestamp: number;
 }
 
+/**
+ * Extracts requirements and validations from conversation history.
+ *
+ * Analyzes messages for requirement patterns and tool executions for test results.
+ */
 export class RequirementsExtractor {
   // Requirement indicators
   private readonly REQUIREMENT_PATTERNS = {
@@ -63,7 +110,26 @@ export class RequirementsExtractor {
   ];
 
   /**
-   * Extract requirements from messages
+   * Extract requirements from conversation messages.
+   *
+   * Analyzes messages using pattern matching to identify four types of requirements:
+   * - Dependency: Required libraries, packages, modules
+   * - Performance: Speed, latency, throughput constraints
+   * - Compatibility: Version requirements, platform support
+   * - Business: Business rules, limitations, constraints
+   *
+   * @param messages - Array of conversation messages to analyze
+   * @returns Array of extracted Requirement objects
+   *
+   * @example
+   * ```typescript
+   * const extractor = new RequirementsExtractor();
+   * const requirements = extractor.extractRequirements(messages);
+   *
+   * // Find all dependency requirements
+   * const deps = requirements.filter(r => r.type === 'dependency');
+   * deps.forEach(d => console.log(`${d.description} - ${d.rationale}`));
+   * ```
    */
   extractRequirements(messages: Message[]): Requirement[] {
     const requirements: Requirement[] = [];
@@ -96,7 +162,32 @@ export class RequirementsExtractor {
   }
 
   /**
-   * Extract validations from tool uses
+   * Extract validations from tool executions.
+   *
+   * Analyzes Bash tool uses to identify test command executions and their results.
+   * Captures test runs including pass/fail status, performance data, and files tested.
+   *
+   * Recognized test commands:
+   * - npm/yarn/pnpm test
+   * - pytest
+   * - jest/mocha
+   * - cargo test (Rust)
+   * - go test (Go)
+   *
+   * @param toolUses - Array of tool invocations
+   * @param toolResults - Array of tool execution results
+   * @param messages - Array of conversation messages for context
+   * @returns Array of extracted Validation objects
+   *
+   * @example
+   * ```typescript
+   * const extractor = new RequirementsExtractor();
+   * const validations = extractor.extractValidations(toolUses, toolResults, messages);
+   *
+   * // Find failed tests
+   * const failures = validations.filter(v => v.result === 'failed');
+   * console.log(`${failures.length} test failures found`);
+   * ```
    */
   extractValidations(
     toolUses: ToolUse[],
