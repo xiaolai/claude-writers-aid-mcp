@@ -58,7 +58,32 @@ npm install -g claude-conversation-memory-mcp
 
 ### Configure Claude Code CLI
 
-Create or edit `~/.claude/config.json`:
+**MCP Configuration File Priority:**
+
+Claude Code checks for MCP server configurations in this order (highest to lowest priority):
+
+1. **`.mcp.json`** - Project-level (in your project root) - **Highest Priority**
+2. **`~/.claude.json`** - User-level global (in your home directory) - **Lower Priority**
+
+**Note**: The file `~/.claude/settings.json` is NOT used for MCP server configuration (it's only for permissions). Always use `~/.claude.json` for global MCP server configuration.
+
+#### Option 1: Global Configuration (Recommended)
+
+Create or edit `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "conversation-memory": {
+      "command": "claude-conversation-memory-mcp"
+    }
+  }
+}
+```
+
+#### Option 2: Project-Level Configuration
+
+Create `.mcp.json` in your project root:
 
 ```json
 {
