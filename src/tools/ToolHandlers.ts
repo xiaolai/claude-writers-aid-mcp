@@ -1,5 +1,5 @@
 /**
- * MCP Tool Handlers - Implementation of all 11 tools
+ * MCP Tool Handlers - Implementation of all 13 tools (including migration)
  */
 
 import { ConversationMemory } from "../ConversationMemory.js";
@@ -7,9 +7,17 @@ import type { SQLiteManager } from "../storage/SQLiteManager.js";
 import { sanitizeForLike } from "../utils/sanitization.js";
 import type * as Types from "../types/ToolTypes.js";
 import { DocumentationGenerator } from "../documentation/DocumentationGenerator.js";
+import { ProjectMigration } from "../utils/ProjectMigration.js";
+import { pathToProjectFolderName } from "../utils/sanitization.js";
+import { readdirSync } from "fs";
+import { join } from "path";
 
 export class ToolHandlers {
-  constructor(private memory: ConversationMemory, private db: SQLiteManager) {}
+  private migration: ProjectMigration;
+
+  constructor(private memory: ConversationMemory, private db: SQLiteManager, projectsDir?: string) {
+    this.migration = new ProjectMigration(db, projectsDir);
+  }
 
   /**
    * Tool 1: index_conversations
@@ -508,6 +516,89 @@ export class ToolHandlers {
         mistakes: extractNumber(mistakesLine),
         commits: extractNumber(commitsLine)
       }
+    };
+  }
+
+  /**
+   * Tool 12: discover_old_conversations
+   */
+  async discoverOldConversations(args: Record<string, unknown>): Promise<Types.DiscoverOldConversationsResponse> {
+    const typedArgs = args as Types.DiscoverOldConversationsArgs;
+    const currentProjectPath = typedArgs.current_project_path || process.cwd();
+
+    const candidates = await this.migration.discoverOldFolders(currentProjectPath);
+
+    // Convert to response format with additional stats
+    const formattedCandidates = candidates.map(c => ({
+      folder_name: c.folderName,
+      folder_path: c.folderPath,
+      stored_project_path: c.storedProjectPath,
+      score: Math.round(c.score * 10) / 10, // Round to 1 decimal
+      stats: {
+        conversations: c.stats.conversations,
+        messages: c.stats.messages,
+        files: 0, // Will be calculated below
+        last_activity: c.stats.lastActivity
+      }
+    }));
+
+    // Count JSONL files for each candidate
+    for (const candidate of formattedCandidates) {
+      try {
+        const files = readdirSync(candidate.folder_path);
+        candidate.stats.files = files.filter((f: string) => f.endsWith('.jsonl')).length;
+      } catch (_error) {
+        candidate.stats.files = 0;
+      }
+    }
+
+    const message = candidates.length > 0
+      ? `Found ${candidates.length} potential old conversation folder(s). Top match has ${formattedCandidates[0].stats.conversations} conversations and ${formattedCandidates[0].stats.files} files (score: ${formattedCandidates[0].score}).`
+      : `No old conversation folders found for project path: ${currentProjectPath}`;
+
+    return {
+      success: true,
+      current_project_path: currentProjectPath,
+      candidates: formattedCandidates,
+      message
+    };
+  }
+
+  /**
+   * Tool 13: migrate_project
+   */
+  async migrateProject(args: Record<string, unknown>): Promise<Types.MigrateProjectResponse> {
+    const typedArgs = args as unknown as Types.MigrateProjectArgs;
+    const sourceFolder = typedArgs.source_folder;
+    const oldProjectPath = typedArgs.old_project_path;
+    const newProjectPath = typedArgs.new_project_path;
+    const dryRun = typedArgs.dry_run ?? false;
+
+    // Calculate target folder path
+    const targetFolderName = pathToProjectFolderName(newProjectPath);
+    const targetFolder = join(this.migration.getProjectsDir(), targetFolderName);
+
+    // Execute migration
+    const result = await this.migration.executeMigration(
+      sourceFolder,
+      targetFolder,
+      oldProjectPath,
+      newProjectPath,
+      dryRun
+    );
+
+    const message = dryRun
+      ? `Dry run: Would migrate ${result.filesCopied} conversation files from ${sourceFolder} to ${targetFolder}`
+      : `Successfully migrated ${result.filesCopied} conversation files to ${targetFolder}. Original files preserved in ${sourceFolder}.`;
+
+    return {
+      success: result.success,
+      source_folder: sourceFolder,
+      target_folder: targetFolder,
+      files_copied: result.filesCopied,
+      database_updated: result.databaseUpdated,
+      backup_created: !dryRun && result.databaseUpdated,
+      message
     };
   }
 }

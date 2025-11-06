@@ -370,3 +370,46 @@ export interface ToolUseRow {
   stdout?: string;
   stderr?: string;
 }
+
+// Migration Tool Types
+
+export interface DiscoverOldConversationsArgs {
+  current_project_path?: string;
+}
+
+export interface OldConversationCandidate {
+  folder_name: string;
+  folder_path: string;
+  stored_project_path: string | null;
+  score: number;
+  stats: {
+    conversations: number;
+    messages: number;
+    files: number;
+    last_activity: number | null;
+  };
+}
+
+export interface DiscoverOldConversationsResponse {
+  success: boolean;
+  current_project_path: string;
+  candidates: OldConversationCandidate[];
+  message: string;
+}
+
+export interface MigrateProjectArgs {
+  source_folder: string;
+  old_project_path: string;
+  new_project_path: string;
+  dry_run?: boolean;
+}
+
+export interface MigrateProjectResponse {
+  success: boolean;
+  source_folder: string;
+  target_folder: string;
+  files_copied: number;
+  database_updated: boolean;
+  backup_created: boolean;
+  message: string;
+}

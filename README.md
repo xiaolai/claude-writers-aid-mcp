@@ -9,6 +9,7 @@ A Model Context Protocol (MCP) server that gives Claude Code long-term memory by
 - **Prevents mistakes** - Learn from past errors and avoid repeating them
 - **Links to git commits** - Connect conversations to code changes
 - **Analyzes file history** - See the complete evolution of files with context
+- **Migrates conversation history** - Keep your history when renaming or moving projects
 
 ## ⚠️ Important: Claude Code CLI Only
 
@@ -392,6 +393,67 @@ You: "Generate project documentation from our conversations"
 ```
 
 Claude will create comprehensive docs combining code analysis with conversation history.
+
+### Migrate Conversation History
+
+When you rename or move a project directory, your conversation history becomes inaccessible because Claude Code creates a new folder for the new path. Use the migration tools to recover your history:
+
+**Step 1: Discover old conversation folders**
+
+```
+You: "Discover old conversations for this project"
+```
+
+Claude will scan `~/.claude/projects/` and show you folders that match your current project, ranked by similarity score. The output includes:
+- Folder name and path
+- Original project path stored in the database
+- Number of conversations and files
+- Last activity timestamp
+- Similarity score (higher = better match)
+
+**Step 2: Migrate the history**
+
+```
+You: "Migrate conversations from /Users/name/.claude/projects/-old-project-name, old path was /Users/name/old-project, new path is /Users/name/new-project"
+```
+
+Claude will:
+- Copy all conversation JSONL files to the new location
+- Update the `project_path` in the database
+- Create automatic backups (`.claude-conversations-memory.db.bak`)
+- Preserve all original data (copy, not move)
+
+**Example workflow:**
+
+```markdown
+# You renamed your project directory
+# Old: /Users/alice/code/my-app
+# New: /Users/alice/code/my-awesome-app
+
+You: "Discover old conversations for this project"
+
+Claude: Found 1 potential old conversation folder:
+- Folder: -Users-alice-code-my-app
+- Original path: /Users/alice/code/my-app
+- Conversations: 15
+- Files: 47
+- Score: 95.3
+
+You: "Migrate from /Users/alice/.claude/projects/-Users-alice-code-my-app, old path /Users/alice/code/my-app, new path /Users/alice/code/my-awesome-app"
+
+Claude: Successfully migrated 47 conversation files.
+Now you can index and search your full history!
+```
+
+**Dry run mode:**
+
+Test the migration without making changes:
+
+```
+You: "Dry run: migrate from [source] old path [old] new path [new]"
+```
+
+This shows what would be migrated without actually copying files.
 
 ## 📚 Learn More
 

@@ -107,6 +107,14 @@ export class ConversationMemoryServer {
             result = await this.handlers.generateDocumentation(args as Record<string, unknown>);
             break;
 
+          case "discover_old_conversations":
+            result = await this.handlers.discoverOldConversations(args as Record<string, unknown>);
+            break;
+
+          case "migrate_project":
+            result = await this.handlers.migrateProject(args as Record<string, unknown>);
+            break;
+
           default:
             throw new Error(`Unknown tool: ${name}`);
         }

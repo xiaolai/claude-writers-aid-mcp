@@ -268,4 +268,46 @@ export const TOOLS = {
       },
     },
   },
+
+  discover_old_conversations: {
+    name: "discover_old_conversations",
+    description: "Discover old conversation folders when project directories are renamed or moved. Scans ~/.claude/projects to find folders that match the current project based on database contents and folder similarity.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        current_project_path: {
+          type: "string",
+          description: "Current project path (defaults to current working directory). Used to find matching old folders.",
+        },
+      },
+    },
+  },
+
+  migrate_project: {
+    name: "migrate_project",
+    description: "Migrate conversation history from an old project folder to a new location. Copies JSONL files and updates database paths. Creates backups automatically.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        source_folder: {
+          type: "string",
+          description: "Path to the source conversation folder (e.g., /Users/name/.claude/projects/-old-project)",
+        },
+        old_project_path: {
+          type: "string",
+          description: "Old project path stored in database (e.g., /Users/name/old-project)",
+        },
+        new_project_path: {
+          type: "string",
+          description: "New project path to update to (e.g., /Users/name/new-project)",
+        },
+        dry_run: {
+          type: "boolean",
+          description: "If true, shows what would be migrated without making changes (default: false)",
+          default: false,
+        },
+      },
+      required: ["source_folder", "old_project_path", "new_project_path"],
+    },
+  },
 };
