@@ -4,6 +4,7 @@
  */
 
 import type { EmbeddingProvider, ModelInfo } from "../EmbeddingProvider.js";
+import { getModelDimensions } from "../ModelRegistry.js";
 
 // Type for OpenAI client (dynamic import)
 type OpenAIClient = {
@@ -150,15 +151,16 @@ export class OpenAIEmbeddings implements EmbeddingProvider {
   }
 
   /**
-   * Get default dimensions for OpenAI models
+   * Get default dimensions for OpenAI models using ModelRegistry
    */
   private getDefaultDimensions(model: string): number {
-    const modelDimensions: Record<string, number> = {
-      "text-embedding-3-small": 1536,
-      "text-embedding-3-large": 3072,
-      "text-embedding-ada-002": 1536,
-    };
+    // Try to get dimensions from ModelRegistry
+    const dimensions = getModelDimensions(model);
+    if (dimensions) {
+      return dimensions;
+    }
 
-    return modelDimensions[model] || 1536;
+    // Default to 1536 if unknown (most common for OpenAI models)
+    return 1536;
   }
 }

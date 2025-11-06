@@ -4,6 +4,7 @@
  */
 
 import type { EmbeddingProvider, ModelInfo } from "../EmbeddingProvider.js";
+import { getModelDimensions } from "../ModelRegistry.js";
 
 interface OllamaEmbeddingResponse {
   embedding: number[];
@@ -141,25 +142,16 @@ export class OllamaEmbeddings implements EmbeddingProvider {
   }
 
   /**
-   * Get default dimensions for common Ollama models
+   * Get default dimensions for common Ollama models using ModelRegistry
    */
   private getDefaultDimensions(model: string): number {
-    // Common Ollama embedding models and their dimensions
-    const modelDimensions: Record<string, number> = {
-      "nomic-embed-text": 768,
-      "mxbai-embed-large": 1024,
-      "all-minilm": 384,
-      "snowflake-arctic-embed": 1024,
-    };
-
-    // Check if model name contains any known model
-    for (const [knownModel, dims] of Object.entries(modelDimensions)) {
-      if (model.includes(knownModel)) {
-        return dims;
-      }
+    // Try to get dimensions from ModelRegistry
+    const dimensions = getModelDimensions(model);
+    if (dimensions) {
+      return dimensions;
     }
 
-    // Default to 768 if unknown (most common)
+    // Default to 768 if unknown (most common for Ollama models)
     console.warn(
       `Unknown model dimensions for '${model}', defaulting to 768. Specify dimensions in config if different.`
     );

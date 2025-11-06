@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2025-01-06
+
+### Added
+
+- **Model Registry Architecture** - Centralized single source of truth for all embedding models
+  - New `ModelRegistry.ts` with complete model metadata (name, dimensions, provider, quality, description, installation, cost)
+  - 38 comprehensive unit tests for ModelRegistry (all passing)
+  - Helper functions: `getModelsByProvider()`, `getModelInfo()`, `getModelDimensions()`, `getAllModels()`, `modelExists()`, `getModelsByQuality()`, `getRecommendedModel()`
+  - Partial string matching support for flexible model lookup (Ollama-style)
+
+- **Enhanced Model Discoverability**
+  - CLI `config` command now displays all 11 models organized by provider with dimensions and descriptions
+  - Created `.claude-memory-config.example.json` - clean, copy-paste ready config example
+  - Created `.claude-memory-config.example.jsonc` - comprehensive commented guide with inline model documentation
+  - Both example files included in npm package distribution
+
+- **Comprehensive Documentation**
+  - New `docs/MODELS.md` - Complete guide to all embedding models
+    - Decision matrix for choosing models
+    - Quality tiers and performance benchmarks
+    - Configuration examples for each provider
+    - Migration guide for switching models
+    - Advanced topics: custom models, multi-language support, performance considerations
+  - Updated README with model discovery instructions
+
+### Changed
+
+- Refactored `OllamaEmbeddings.ts` to use ModelRegistry (eliminated hardcoded dimensions map)
+- Refactored `TransformersEmbeddings.ts` to use ModelRegistry (eliminated hardcoded dimensions map)
+- Refactored `OpenAIEmbeddings.ts` to use ModelRegistry (eliminated hardcoded dimensions map)
+- Updated CLI `commands.ts` to dynamically generate model list from ModelRegistry (no more hardcoded output)
+
+### Technical Details
+
+- **DRY Principle Applied**: Eliminated 4 duplicate model dimension definitions across codebase
+- **Improved `getRecommendedModel()` logic**: Now properly cascades through quality levels (highest → high → medium → low)
+- **Empty string validation**: `getModelInfo()` now returns null for empty/whitespace-only model names
+- **Quality-based filtering**: New `getModelsByQuality()` for finding models by quality tier
+- All 147 tests passing (9 skipped), 0 warnings, 0 errors
+
 ## [0.4.0] - 2025-01-06
 
 ### Added

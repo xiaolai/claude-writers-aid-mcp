@@ -4,6 +4,7 @@
  */
 
 import type { EmbeddingProvider, ModelInfo } from "../EmbeddingProvider.js";
+import { getModelDimensions } from "../ModelRegistry.js";
 
 // Type for the pipeline function from @xenova/transformers
 type EmbeddingPipeline = ((text: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>) | null;
@@ -129,16 +130,16 @@ export class TransformersEmbeddings implements EmbeddingProvider {
   }
 
   /**
-   * Get default dimensions for common transformer models
+   * Get default dimensions for common transformer models using ModelRegistry
    */
   private getDefaultDimensions(model: string): number {
-    const modelDimensions: Record<string, number> = {
-      "Xenova/all-MiniLM-L6-v2": 384,
-      "Xenova/all-mpnet-base-v2": 768,
-      "Xenova/bge-small-en-v1.5": 384,
-      "Xenova/bge-base-en-v1.5": 768,
-    };
+    // Try to get dimensions from ModelRegistry
+    const dimensions = getModelDimensions(model);
+    if (dimensions) {
+      return dimensions;
+    }
 
-    return modelDimensions[model] || 384;
+    // Default to 384 if unknown (most common for small models)
+    return 384;
   }
 }

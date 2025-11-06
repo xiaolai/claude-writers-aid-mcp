@@ -8,6 +8,7 @@ import { ToolHandlers } from "../tools/ToolHandlers.js";
 import { getSQLiteManager } from "../storage/SQLiteManager.js";
 import { showHelp, showCommandHelp } from "./help.js";
 import { ConfigManager } from "../embeddings/ConfigManager.js";
+import { getModelsByProvider } from "../embeddings/ModelRegistry.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -683,25 +684,34 @@ function handleConfigShow(): string {
   output += `  ${chalk.cyan("baseUrl")}        Ollama base URL (default: http://localhost:11434)\n`;
   output += `  ${chalk.cyan("apiKey")}         OpenAI API key\n\n`;
 
-  // Show available models by provider
+  // Show available models by provider using ModelRegistry
   output += chalk.bold("Known Models by Provider:\n\n");
 
+  // Ollama models
   output += chalk.yellow("Ollama (local):\n");
-  output += `  ${"mxbai-embed-large".padEnd(30)} 1024 dims  ${chalk.dim("(recommended)")}\n`;
-  output += `  ${"nomic-embed-text".padEnd(30)}  768 dims  ${chalk.dim("(fast, good quality)")}\n`;
-  output += `  ${"all-minilm".padEnd(30)}  384 dims  ${chalk.dim("(lightweight)")}\n`;
-  output += `  ${"snowflake-arctic-embed".padEnd(30)} 1024 dims  ${chalk.dim("(optimized for retrieval)")}\n\n`;
+  const ollamaModels = getModelsByProvider("ollama");
+  for (const model of ollamaModels) {
+    const suffix = model.installation ? ` ${chalk.dim(`(${model.description})`)}` : "";
+    output += `  ${model.name.padEnd(30)} ${model.dimensions.toString().padStart(4)} dims${suffix}\n`;
+  }
+  output += "\n";
 
+  // Transformers models
   output += chalk.yellow("Transformers (offline):\n");
-  output += `  ${"Xenova/all-MiniLM-L6-v2".padEnd(30)}  384 dims  ${chalk.dim("(default, no setup)")}\n`;
-  output += `  ${"Xenova/all-mpnet-base-v2".padEnd(30)}  768 dims  ${chalk.dim("(better quality)")}\n`;
-  output += `  ${"Xenova/bge-small-en-v1.5".padEnd(30)}  384 dims  ${chalk.dim("(English-optimized)")}\n`;
-  output += `  ${"Xenova/bge-base-en-v1.5".padEnd(30)}  768 dims  ${chalk.dim("(English, higher quality)")}\n\n`;
+  const transformersModels = getModelsByProvider("transformers");
+  for (const model of transformersModels) {
+    output += `  ${model.name.padEnd(30)} ${model.dimensions.toString().padStart(4)} dims  ${chalk.dim(`(${model.description})`)}\n`;
+  }
+  output += "\n";
 
+  // OpenAI models
   output += chalk.yellow("OpenAI (cloud):\n");
-  output += `  ${"text-embedding-3-small".padEnd(30)} 1536 dims  ${chalk.dim("(cost-effective)")}\n`;
-  output += `  ${"text-embedding-3-large".padEnd(30)} 3072 dims  ${chalk.dim("(best quality)")}\n`;
-  output += `  ${"text-embedding-ada-002".padEnd(30)} 1536 dims  ${chalk.dim("(legacy)")}\n\n`;
+  const openaiModels = getModelsByProvider("openai");
+  for (const model of openaiModels) {
+    const costSuffix = model.cost ? ` - ${model.cost}` : "";
+    output += `  ${model.name.padEnd(30)} ${model.dimensions.toString().padStart(4)} dims  ${chalk.dim(`(${model.description}${costSuffix})`)}\n`;
+  }
+  output += "\n";
 
   output += chalk.gray(`Config file location: ${configPath}\n`);
   if (!configExists) {
