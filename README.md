@@ -10,6 +10,7 @@ A Model Context Protocol (MCP) server that gives Claude Code long-term memory by
 - **Links to git commits** - Connect conversations to code changes
 - **Analyzes file history** - See the complete evolution of files with context
 - **Migrates conversation history** - Keep your history when renaming or moving projects
+- **Context transfer** - Recall past work and apply it to current tasks ("remember X, now do Y based on that")
 
 ## ⚠️ Important: Claude Code CLI Only
 
@@ -293,6 +294,21 @@ You: "Show me how auth.ts evolved over time"
 Claude: Let me trace the file evolution...
 [Shows complete timeline with conversations, commits, and decisions]
 ```
+
+### Recall and Apply Context
+
+```
+You: "Recall how we implemented authentication, now add OAuth support using that same pattern"
+
+Claude: Let me recall the authentication implementation context...
+[Returns relevant conversations, decisions, mistakes, file changes, and commits]
+[Provides suggestions for applying this context to OAuth implementation]
+```
+
+**More examples:**
+- "Remember the bug we fixed in parser.ts, check if similar issue exists in lexer.ts"
+- "Recall all decisions about database schema, now design the migration strategy"
+- "Find mistakes we made with async/await, avoid them in this new async function"
 
 ## 🔧 Advanced Usage
 
