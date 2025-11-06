@@ -85,6 +85,11 @@ export class ConversationMemory {
   constructor() {
     this.sqliteManager = getSQLiteManager();
     this.storage = new ConversationStorage(this.sqliteManager);
+
+    // Enable caching by default for better performance
+    // Cache up to 100 query results for 5 minutes
+    this.storage.enableCache({ maxSize: 100, ttlMs: 300000 });
+
     this.parser = new ConversationParser();
     this.decisionExtractor = new DecisionExtractor();
     this.mistakeExtractor = new MistakeExtractor();
