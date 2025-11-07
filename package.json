@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsc && npm run postbuild",
-    "postbuild": "cp src/storage/schema.sql dist/storage/",
+    "postbuild": "cp src/storage/writing-schema.sql dist/storage/",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",

@@ -188,8 +188,8 @@ export class SQLiteManager {
       if (tables.length === 0) {
         console.log("Initializing database schema...");
 
-        // Read and execute schema.sql
-        const schemaPath = join(__dirname, "schema.sql");
+        // Read and execute writing-schema.sql
+        const schemaPath = join(__dirname, "writing-schema.sql");
         const schema = readFileSync(schemaPath, "utf-8");
 
         // Execute the entire schema at once
