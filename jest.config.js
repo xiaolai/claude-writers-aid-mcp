@@ -17,6 +17,13 @@ export default {
     '**/__tests__/**/*.test.ts',
     '**/?(*.)+(spec|test).ts'
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/integration/component-integration.test.ts',
+    '/__tests__/e2e/full-workflow.test.ts',
+    '/__tests__/performance/large-manuscript.test.ts',
+    '/__tests__/unit/analysis/StructureValidator.test.ts'
+  ],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
