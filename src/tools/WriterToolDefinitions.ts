@@ -10,6 +10,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         query: { type: "string", description: "Search query" },
         scope: { type: "string", description: "File scope pattern (e.g., 'chapters/*.md')" },
         limit: { type: "number", description: "Maximum results", default: 10 },
@@ -23,6 +24,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         reference_text: { type: "string", description: "Text to find related content for" },
         limit: { type: "number", description: "Maximum results", default: 5 },
         exclude_file: { type: "string", description: "File to exclude from results" },
@@ -36,6 +38,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         num_themes: { type: "number", description: "Number of themes to extract", default: 5 },
       },
@@ -47,6 +50,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         concept: { type: "string", description: "Concept to track" },
         chronological: { type: "boolean", description: "Sort chronologically", default: true },
       },
@@ -59,6 +63,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
       },
     },
@@ -71,6 +76,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         depth: { type: "number", description: "Outline depth", default: 3 },
         include_word_counts: { type: "boolean", description: "Include word counts", default: false },
@@ -83,6 +89,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         current_structure: { type: "string", description: "Description of current structure" },
         optimization: {
           type: "string",
@@ -98,6 +105,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
       },
     },
@@ -108,6 +116,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         file_path: { type: "string", description: "Specific file to validate" },
         checks: {
           type: "array",
@@ -125,6 +134,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         format: {
           type: "string",
@@ -141,6 +151,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         check_external: { type: "boolean", description: "Check external links", default: false },
         scope: { type: "string", description: "File scope pattern" },
       },
@@ -152,6 +163,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         min_similarity: {
           type: "number",
           description: "Minimum similarity threshold",
@@ -171,6 +183,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         start_file: { type: "string", description: "Starting file" },
         end_file: { type: "string", description: "Target file" },
         concept: { type: "string", description: "Concept to track" },
@@ -186,6 +199,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         auto_detect: { type: "boolean", description: "Auto-detect variants", default: true },
         terms: {
@@ -202,6 +216,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         markers: {
           type: "array",
@@ -222,6 +237,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         file_path: { type: "string", description: "Specific file to analyze" },
         metrics: {
           type: "array",
@@ -237,6 +253,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         similarity_threshold: {
           type: "number",
@@ -255,6 +272,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         scope: { type: "string", description: "File scope pattern" },
         breakdown_by: {
           type: "string",
@@ -270,6 +288,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         since: { type: "string", description: "Timestamp or relative time" },
         scope: { type: "string", description: "File scope pattern" },
         summary_level: {
@@ -287,6 +306,7 @@ export const writerToolDefinitions = [
     inputSchema: {
       type: "object",
       properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
         target_word_count: { type: "number", description: "Target word count goal" },
         scope: { type: "string", description: "File scope pattern" },
         include_todos: { type: "boolean", description: "Include TODO count", default: true },

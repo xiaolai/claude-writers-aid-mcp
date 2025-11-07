@@ -50,7 +50,7 @@ if (hasCliArgs) {
   const server = new Server(
       {
         name: "writers-aid",
-        version: "0.1.0",
+        version: "0.2.0",
       },
       {
         capabilities: {
@@ -58,11 +58,6 @@ if (hasCliArgs) {
         },
       }
     );
-
-    // Initialize WritersAid with current directory
-    const projectPath = process.cwd();
-    const writersAid = new WritersAid({ projectPath });
-    const handlers = new WriterToolHandlers(writersAid);
 
     // Register tool list handler
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -74,7 +69,18 @@ if (hasCliArgs) {
       const { name, arguments: args } = request.params;
 
       try {
+        // Extract project_path from arguments, default to current directory
+        const projectPath = (args?.project_path as string) || process.cwd();
+
+        // Initialize WritersAid for this specific tool call
+        const writersAid = new WritersAid({ projectPath });
+        const handlers = new WriterToolHandlers(writersAid);
+
+        // Call the tool
         const result = await handlers.handleTool(name, args || {});
+
+        // Close the connection after use
+        writersAid.close();
 
         return {
           content: [
@@ -106,5 +112,5 @@ if (hasCliArgs) {
       process.exit(1);
     });
 
-    console.error("Writer's Aid MCP v0.1.0 - Server started");
+    console.error("Writer's Aid MCP v0.2.1 - Server started");
 }
