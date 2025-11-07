@@ -1,11 +1,11 @@
 {
-  "name": "claude-conversation-memory-mcp",
-  "version": "1.0.0",
-  "description": "MCP server for indexing and searching Claude Code conversation history with decision tracking, git integration, and project migration/merge",
+  "name": "claude-writers-aid-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for nonfiction writers - AI-powered manuscript assistant for research, structure, and quality control",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "claude-conversation-memory-mcp": "dist/index.js"
+    "writers-aid": "dist/index.js"
   },
   "files": [
     "dist",
@@ -33,22 +33,25 @@
   },
   "keywords": [
     "mcp",
-    "claude",
-    "conversation",
-    "memory",
+    "writing",
+    "manuscript",
+    "documentation",
+    "nonfiction",
+    "markdown",
+    "author-tools",
     "semantic-search",
-    "decision-tracking"
+    "quality-control"
   ],
   "author": "xiaolai",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xiaolai/claude-conversation-memory-mcp.git"
+    "url": "git+https://github.com/xiaolai/claude-writers-aid-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/xiaolai/claude-conversation-memory-mcp/issues"
+    "url": "https://github.com/xiaolai/claude-writers-aid-mcp/issues"
   },
-  "homepage": "https://github.com/xiaolai/claude-conversation-memory-mcp#readme",
+  "homepage": "https://github.com/xiaolai/claude-writers-aid-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "better-sqlite3": "^11.10.0",
@@ -58,7 +61,6 @@
     "lru-cache": "^10.0.0",
     "nanoid": "^5.0.0",
     "prompts": "^2.4.2",
-    "simple-git": "^3.25.0",
     "sqlite-vec": "^0.1.6"
   },
   "optionalDependencies": {
