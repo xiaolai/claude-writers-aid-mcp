@@ -1,277 +1,81 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to Writer's Aid MCP will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-01-07
+## [0.1.0] - 2025-01-07
 
-### 🎉 Production Release
+### 🎉 Initial Release - Writer's Aid MCP
 
-This is the first stable production release of claude-conversation-memory-mcp. The codebase has reached maturity with comprehensive testing, performance optimization, and production-ready features.
-
-### Added
-
-- **Query Caching Layer** - LRU cache with TTL for database query results
-  - New `QueryCache` class with LRU eviction and TTL expiration
-  - Caching enabled by default in `ConversationMemory` (100 entries, 5 minute TTL)
-  - Smart cache invalidation on data updates
-  - Cache statistics tracking (hits, misses, evictions, hit rate)
-  - Configurable cache size and TTL
-  - O(1) cache operations for optimal performance
-
-- **Cached Query Methods** - 5 frequently-used queries now cached:
-  - `getConversation()` - Single conversation lookup
-  - `getFileTimeline()` - Complete file history
-  - `getFileEdits()` - File edit history
-  - `getDecisionsForFile()` - Decisions related to a file
-  - `getCommitsForFile()` - Git commits for a file
-
-- **Cache Management API** - Public methods for cache control:
-  - `enableCache(config)` - Configure and enable caching
-  - `disableCache()` - Turn off caching
-  - `clearCache()` - Clear all cached data
-  - `isCacheEnabled()` - Check cache status
-  - `getCacheStats()` - Get performance metrics
-
-### Performance Improvements
-
-- **~80% cache hit rate** on repeated queries after warmup
-- **O(1) cache lookups** using Map-based LRU implementation
-- **Automatic cache invalidation** prevents stale data
-- **Reduced database load** through intelligent caching
-- **Default enabled** for better out-of-box performance
-
-### Technical Improvements
-
-- Comprehensive JSDoc documentation for all public APIs
-- 47 new tests (29 QueryCache + 18 CachedConversationStorage)
-- All 400 tests passing with 0 warnings
-- Test-Driven Development (TDD) workflow throughout Phase 4
-- Edge case handling (size 1 cache, null values, rapid operations)
-- Configuration validation for cache parameters
-
-### Breaking Changes
-
-None - This is a backward compatible release. Caching is enabled by default but can be disabled if needed.
-
-### Migration from 0.6.0 to 1.0.0
-
-No code changes required. Caching is automatically enabled with sensible defaults (100 entries, 5 minutes).
-
-To customize cache settings:
-
-```typescript
-const memory = new ConversationMemory();
-memory.getStorage().enableCache({ maxSize: 200, ttlMs: 600000 }); // 200 entries, 10 minutes
-```
-
-To disable caching:
-
-```typescript
-memory.getStorage().disableCache();
-```
-
-### Quality Metrics
-
-- **0 errors, 0 warnings** across entire codebase
-- **400 tests passing** (147 original + 47 new + 206 existing)
-- **100% type safety** with strict TypeScript checking
-- **Comprehensive documentation** for all new features
-- **Production-ready** code quality standards
-
-## [0.6.0] - 2025-01-06
+First release of Writer's Aid MCP - AI-powered manuscript assistant for nonfiction writers. Complete implementation with 20 MCP tools, 13 CLI commands, and comprehensive testing.
 
 ### Added
 
-- **New `recall_and_apply` Tool** - Context transfer for "remember X, now do Y based on that" workflows
-  - Recalls multiple context types in one call: conversations, decisions, mistakes, file_changes, commits
-  - Filters by query, file_path, date_range, and context_types
-  - Returns structured recalled context with application suggestions
-  - Provides context_summary showing what was found
-  - Generates actionable suggestions for applying recalled context
-  - Optimized for AI workflows requiring historical context
+#### Core Infrastructure
+- **SQLite Database** with sqlite-vec extension for vector storage
+- **Markdown Parsing** with frontmatter, heading, and link extraction
+- **Semantic Search** with hybrid FTS5 + vector search
+- **Embedding Support** for transformers, OpenAI, and Ollama providers
+- **Query Caching** with LRU cache for performance
 
-### Use Cases
+#### 20 MCP Tools
+- **Content Discovery** (5): search_content, find_related_content, extract_themes, find_gaps, find_duplicates
+- **Structure** (4): get_outline, validate_structure, get_stats, get_progress
+- **Links** (4): check_links, get_link_graph, find_broken_links, suggest_links
+- **Quality** (4): check_terminology, analyze_readability, find_todos, check_consistency
+- **Progress** (3): get_word_count, track_changes, get_timeline
 
-- "Recall how we implemented authentication, now add OAuth support using that same pattern"
-- "Remember the bug we fixed in parser.ts, check if similar issue exists in lexer.ts"
-- "Recall all decisions about database schema, now design the migration strategy"
-- "Find mistakes we made with async/await, avoid them in this new async function"
+#### 13 CLI Commands
+- **Setup**: init, config
+- **Search**: search, find-related, themes
+- **Structure**: outline, structure
+- **Quality**: check, terminology, todos, links
+- **Progress**: stats, changes
 
-### Technical Details
+#### Analysis & Quality Tools
+- StructureValidator, TerminologyChecker, ReadabilityAnalyzer
+- DuplicateFinder, GapFinder, TodoExtractor
+- LinkHealthChecker, ConsistencyChecker
 
-- 220+ lines of new handler logic
-- Integrates with existing search, decisions, mistakes, commits infrastructure
-- Supports selective context types for performance
-- Backward compatible with all existing tools
-- 0 errors, 0 warnings, 147 tests passing
-
-## [0.5.0] - 2025-01-06
-
-### Added
-
-- **New `models` CLI Command** - Power user features for exploring embedding models
-  - `models` - List all 11 models in a formatted table (name, provider, dimensions, quality, description)
-  - `models <provider>` - Filter by provider (ollama, transformers, openai) with recommended model highlighted
-  - `models quality <tier>` - Filter by quality tier (low, medium, high, highest)
-  - `models recommend` - Show recommended model for each provider with installation/cost info
-
-- **Interactive Model Selection** - User-friendly guided setup
-  - New `select-model` (alias: `select`) command with step-by-step prompts
-  - Choose provider → Choose model → Confirm and save
-  - Recommended models highlighted with ⭐
-  - Shows setup instructions (Ollama pull commands, API key requirements, costs)
-  - Automatically sets provider, model, and dimensions in one go
-
-- **Model Validation** - Prevent configuration mistakes
-  - `set model <name>` now validates against ModelRegistry
-  - Warns if model not found, suggests using `models` command
-  - Allows custom models with warning to set dimensions manually
-
-### Changed
-
-- Enhanced `set dimensions` command - Now dynamically suggests matching models from ModelRegistry (was hardcoded)
-- All CLI model references now powered by ModelRegistry for consistency
-
-### Technical Details
-
-- Interactive prompts powered by existing `prompts` package
-- Zero new dependencies added
-- All new CLI features fully tested (manual testing)
-- 0 errors, 0 warnings, all tests passing
-
-## [0.4.1] - 2025-01-06
-
-### Added
-
-- **Model Registry Architecture** - Centralized single source of truth for all embedding models
-  - New `ModelRegistry.ts` with complete model metadata (name, dimensions, provider, quality, description, installation, cost)
-  - 38 comprehensive unit tests for ModelRegistry (all passing)
-  - Helper functions: `getModelsByProvider()`, `getModelInfo()`, `getModelDimensions()`, `getAllModels()`, `modelExists()`, `getModelsByQuality()`, `getRecommendedModel()`
-  - Partial string matching support for flexible model lookup (Ollama-style)
-
-- **Enhanced Model Discoverability**
-  - CLI `config` command now displays all 11 models organized by provider with dimensions and descriptions
-  - Created `.claude-memory-config.example.json` - clean, copy-paste ready config example
-  - Created `.claude-memory-config.example.jsonc` - comprehensive commented guide with inline model documentation
-  - Both example files included in npm package distribution
-
-- **Comprehensive Documentation**
-  - New `docs/MODELS.md` - Complete guide to all embedding models
-    - Decision matrix for choosing models
-    - Quality tiers and performance benchmarks
-    - Configuration examples for each provider
-    - Migration guide for switching models
-    - Advanced topics: custom models, multi-language support, performance considerations
-  - Updated README with model discovery instructions
-
-### Changed
-
-- Refactored `OllamaEmbeddings.ts` to use ModelRegistry (eliminated hardcoded dimensions map)
-- Refactored `TransformersEmbeddings.ts` to use ModelRegistry (eliminated hardcoded dimensions map)
-- Refactored `OpenAIEmbeddings.ts` to use ModelRegistry (eliminated hardcoded dimensions map)
-- Updated CLI `commands.ts` to dynamically generate model list from ModelRegistry (no more hardcoded output)
-
-### Technical Details
-
-- **DRY Principle Applied**: Eliminated 4 duplicate model dimension definitions across codebase
-- **Improved `getRecommendedModel()` logic**: Now properly cascades through quality levels (highest → high → medium → low)
-- **Empty string validation**: `getModelInfo()` now returns null for empty/whitespace-only model names
-- **Quality-based filtering**: New `getModelsByQuality()` for finding models by quality tier
-- All 147 tests passing (9 skipped), 0 warnings, 0 errors
-
-## [0.4.0] - 2025-01-06
-
-### Added
-
-- **Merge Mode for Project Migration** - Combine conversations from different projects into one folder
-  - `migrate_project` tool now supports `mode` parameter: "migrate" (default) or "merge"
-  - "merge" mode combines conversations from source into existing target folder
-  - Duplicate conversation IDs are skipped (target kept) - no data loss
-  - Safely merge history from different projects or development branches
-  - Automatic target database backup before merge
-  - Transaction-based merge with rollback on error
-
-### Changed
-
-- `migrate_project` tool description updated to document both modes
-- Tool handler generates mode-specific success messages
-
-### Technical Details
-
-- New `executeMerge()` method in `ProjectMigration` class
-- New `mergeDatabase()` method uses `INSERT OR IGNORE` strategy
-- Defensive table existence checking for schema compatibility
-- 5 new comprehensive tests for merge mode (all passing)
-
-## [0.3.0] - 2025-01-06
-
-### Added
-
-- **Project Migration Feature** - Recover conversation history when project directories are renamed or moved
-  - `discover_old_conversations` tool - Automatically finds old conversation folders by scanning `~/.claude/projects/`
-  - `migrate_project` tool - Safely migrates JSONL files and updates database paths
-  - Combined discovery approach using database inspection, folder similarity scoring, and JSONL analysis
-  - Dry-run mode for testing migrations without making changes
-  - Automatic backups (`.claude-conversations-memory.db.bak`) before migration
-  - Transaction-based database updates with rollback on error
-  - Comprehensive error handling and validation
-
-### Documentation
-
-- Added migration section to README with step-by-step examples
-- Created MIGRATION-TESTING.md with 6 test scenarios and troubleshooting guide
-- Updated tool definitions with clear descriptions and parameter documentation
+#### Documentation
+- USER-GUIDE.md (400+ lines) - Installation, workflows, best practices
+- TOOL-REFERENCE.md (600+ lines) - Complete MCP tool documentation
+- CLI-REFERENCE.md (500+ lines) - Detailed CLI command reference
 
 ### Testing
+- **401 passing tests** (E2E, integration, performance, unit)
+- **E2E Tests** (35+ cases) - Full workflow validation
+- **Integration Tests** (40+ cases) - Component interactions
+- **Performance Tests** (12+ cases) - 100+ file handling
+- **Sample Manuscript** with intentional issues for testing
+- **Zero TypeScript errors and ESLint warnings**
 
-- Added 39 new tests (24 unit + 5 integration + 10 tool handler tests)
-- All 113 tests passing with 100% coverage for migration logic
-- Test isolation ensures no interference with real conversation folders
+### Performance
+- Index 100+ files in under 30 seconds
+- Search in under 2 seconds
+- Structure validation in under 5 seconds
+- Terminology check in under 10 seconds
+- Memory efficient - No leaks during extended operations
 
-### Technical Details
+### Quality Metrics
+- **0 errors, 0 warnings** across entire codebase
+- **401 tests passing** with comprehensive coverage
+- **100% type safety** with strict TypeScript
+- **TDD approach** - Tests written FIRST for all features
+- **Production-ready** code quality standards
 
-- New `ProjectMigration` class in `src/utils/ProjectMigration.ts`
-- Scoring algorithm ranks folder matches: database path (100 pts) + folder similarity (50%) + JSONL count (30 pts max)
-- Safe copy-based migration preserves original data
-- Injectable `projectsDir` parameter for test isolation
+## [Unreleased]
 
-## [0.2.5] - 2025-01-05
-
-### Fixed
-
-- Fixed MCP filtering to exclude messages instead of entire conversations
-- Improved conversation filtering to prevent self-referential loops
-
-### Changed
-
-- Show indexed folders and database path in index response
-- Better visibility into which folders were scanned
-
-## [0.2.4] - 2025-01-04
-
-### Fixed
-
-- MCP conversation filtering improvements
-- Removed debug logging
-
-## [Previous Versions]
-
-See git history for changes before v0.2.4.
+### Planned Features
+- Interactive CLI with TUI
+- Real-time file watching and auto-reindexing
+- Export to various formats (PDF, EPUB, HTML)
+- Custom quality rule definitions
+- Team collaboration features
+- Version control integration (git blame, history)
 
 ---
 
-## Migration Guide from 0.2.x to 0.3.0
-
-No breaking changes. The migration feature is additive - all existing functionality remains unchanged.
-
-To use the new migration feature:
-
-1. Update to v0.3.0: `npm install -g claude-conversation-memory-mcp@0.3.0`
-2. Restart Claude Code to load new tools
-3. Use "Discover old conversations" when you rename a project
-4. Use "Migrate from..." to copy history to new location
-
-See README.md for detailed usage examples.
+[0.1.0]: https://github.com/xiaolai/claude-writers-aid-mcp/releases/tag/v0.1.0
