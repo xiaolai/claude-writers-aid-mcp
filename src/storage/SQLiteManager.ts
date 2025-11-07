@@ -6,10 +6,8 @@
 import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
-import { homedir } from "os";
 import { mkdirSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
-import { pathToProjectFolderName } from "../utils/sanitization.js";
 import * as sqliteVec from "sqlite-vec";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,15 +37,12 @@ export class SQLiteManager {
       // Explicit path provided
       this.dbPath = config.dbPath;
     } else {
-      // Per-project database in ~/.claude/projects/{project-folder}/
+      // Per-project database in {project}/.writers-aid/
       const projectPath = config.projectPath || process.cwd();
-      const projectFolderName = pathToProjectFolderName(projectPath);
       this.dbPath = join(
-        homedir(),
-        ".claude",
-        "projects",
-        projectFolderName,
-        ".claude-conversations-memory.db"
+        projectPath,
+        ".writers-aid",
+        "manuscript.db"
       );
     }
 

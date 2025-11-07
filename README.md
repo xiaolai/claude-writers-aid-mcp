@@ -21,7 +21,7 @@ It does NOT work with:
 - ❌ Claude Web
 - ❌ Other Claude integrations
 
-Claude Code CLI is required because it stores conversation history in `~/.claude/projects/` which this MCP indexes.
+Writer's Aid MCP stores manuscript data in `.writers-aid/manuscript.db` within your project folder, keeping all writing data alongside your manuscript files.
 
 ## 📦 Installation
 

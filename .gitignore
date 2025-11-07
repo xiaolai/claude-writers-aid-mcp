@@ -33,10 +33,11 @@ coverage/
 *.tmp
 *.temp
 
-# Database (don't commit user's conversations)
+# Database (don't commit user's manuscript data)
 *.db
 *.db-shm
 *.db-wal
+.writers-aid/
 
 # Other
 .cache/
