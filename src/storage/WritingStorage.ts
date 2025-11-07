@@ -420,4 +420,103 @@ export class WritingStorage {
     this.cache?.set(cacheKey, stats);
     return stats;
   }
+
+  // ============================================================================
+  // Convenience Helper Methods
+  // ============================================================================
+
+  /**
+   * Add a single file (convenience method)
+   */
+  async addFile(data: { filePath: string; content: string; title: string }): Promise<void> {
+    const file: MarkdownFile = {
+      id: data.filePath,
+      file_path: data.filePath,
+      title: data.title,
+      content: data.content,
+      content_hash: this.hashContent(data.content),
+      word_count: data.content.split(/\s+/).length,
+      created_at: Date.now(),
+      last_modified: Date.now(),
+      indexed_at: Date.now(),
+    };
+
+    await this.storeFiles([file]);
+  }
+
+  /**
+   * Add a single chunk (convenience method)
+   */
+  async addChunk(
+    filePath: string,
+    data: { heading: string; content: string; chunkIndex: number; tokenCount: number }
+  ): Promise<void> {
+    const chunk: MarkdownChunk = {
+      id: `${filePath}:${data.chunkIndex}`,
+      file_id: filePath,
+      chunk_index: data.chunkIndex,
+      heading: data.heading,
+      content: data.content,
+      start_offset: 0,
+      end_offset: data.content.length,
+      token_count: data.tokenCount,
+      word_count: data.content.split(/\s+/).length,
+    };
+
+    await this.storeChunks([chunk]);
+  }
+
+  /**
+   * Add a single link (convenience method)
+   */
+  async addLink(data: {
+    sourceFile: string;
+    targetFile: string;
+    linkText: string;
+    linkType: string;
+  }): Promise<void> {
+    const link: MarkdownLink = {
+      id: `${data.sourceFile}:${data.targetFile}`,
+      source_file_id: data.sourceFile,
+      target_file_path: data.targetFile,
+      link_text: data.linkText,
+      link_type: data.linkType as "wiki" | "markdown" | "external" | "anchor",
+      source_line: 0,
+      is_broken: false,
+    };
+
+    await this.storeLinks([link]);
+  }
+
+  /**
+   * Get headings for a file
+   */
+  getHeadings(filePath: string): MarkdownHeading[] {
+    const rows = this.db
+      .prepare("SELECT * FROM markdown_headings WHERE file_id = ? ORDER BY line_number")
+      .all(filePath) as MarkdownHeading[];
+
+    return rows;
+  }
+
+  /**
+   * Close database connection
+   */
+  close(): void {
+    this.db.close();
+  }
+
+  /**
+   * Hash content for change detection
+   */
+  private hashContent(content: string): string {
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash.toString(36);
+  }
 }

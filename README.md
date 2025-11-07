@@ -1,16 +1,17 @@
-# Claude Conversation Memory
+# Claude Writer's Aid MCP
 
-A Model Context Protocol (MCP) server that gives Claude Code long-term memory by indexing your conversation history with semantic search, decision tracking, and mistake prevention.
+A Model Context Protocol (MCP) server designed specifically for writers and authors working with markdown manuscripts. Provides intelligent analysis, quality checks, and writing assistance tools integrated into Claude Code.
 
 ## 💡 What It Does
 
-- **Remembers past conversations** - Search your chat history with natural language
-- **Tracks decisions** - Never forget why you made technical choices
-- **Prevents mistakes** - Learn from past errors and avoid repeating them
-- **Links to git commits** - Connect conversations to code changes
-- **Analyzes file history** - See the complete evolution of files with context
-- **Migrates conversation history** - Keep your history when renaming or moving projects
-- **Context transfer** - Recall past work and apply it to current tasks ("remember X, now do Y based on that")
+- **Manuscript Indexing** - Automatically index and track all markdown files in your writing project
+- **Semantic Search** - Find content across your manuscript using natural language queries
+- **Quality Analysis** - Check for terminology consistency, readability, duplicates, and structure issues
+- **Link Management** - Validate internal links, find broken references, and suggest cross-references
+- **Progress Tracking** - Monitor word counts, track changes, and generate progress reports
+- **Theme Extraction** - Discover and analyze recurring themes across your content
+- **TODO Management** - Extract and track all TODO, FIXME, and DRAFT markers
+- **Writing Statistics** - Comprehensive metrics and analytics for your writing project
 
 ## ⚠️ Important: Claude Code CLI Only
 
@@ -21,7 +22,7 @@ It does NOT work with:
 - ❌ Claude Web
 - ❌ Other Claude integrations
 
-Writer's Aid MCP stores manuscript data in `.writers-aid/manuscript.db` within your project folder, keeping all writing data alongside your manuscript files.
+Writer's Aid MCP stores manuscript data in `.writers-aid/manuscript.db` within your project folder, keeping all writing data organized alongside your manuscript files.
 
 ## 📦 Installation
 
@@ -30,101 +31,53 @@ Writer's Aid MCP stores manuscript data in `.writers-aid/manuscript.db` within y
 **Required:**
 1. **Claude Code CLI**: https://github.com/anthropics/claude-code
 2. **Node.js**: Version 18 or higher
-3. **sqlite-vec extension**: Automatically loaded (bundled with the package)
-
-**Recommended for better semantic search quality:**
-4. **Ollama**: For high-quality local embeddings
-   ```bash
-   # macOS/Linux
-   curl -fsSL https://ollama.com/install.sh | sh
-
-   # Or download from: https://ollama.com
-   ```
-
-5. **Default embedding model** (if using Ollama):
-   ```bash
-   # Pull the recommended model
-   ollama pull mxbai-embed-large
-
-   # Start Ollama service
-   ollama serve
-   ```
-
-**Note**: Without Ollama, the MCP automatically falls back to Transformers.js (slower but works offline with no setup).
 
 ### Install the MCP Server
 
-```bash
-npm install -g claude-conversation-memory-mcp
-```
+For local development/use from this repository:
 
-**Discover Available Models:**
-After installation, you can see all available embedding models and their dimensions:
-- Run the CLI: `claude-conversation-memory-mcp`
-- Type: `config` to see all available models organized by provider
-- Or check the example config file: `.claude-memory-config.example.jsonc`
+```bash
+# Clone the repository
+git clone https://github.com/xiaolai/claude-writers-aid-mcp.git
+cd claude-writers-aid-mcp
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+```
 
 ### Configure Claude Code CLI
 
-**MCP Configuration File Priority:**
-
-Claude Code checks for MCP server configurations in this order (highest to lowest priority):
-
-1. **`.mcp.json`** - Project-level (in your project root) - **Highest Priority**
-2. **`~/.claude.json`** - User-level global (in your home directory) - **Lower Priority**
-
-**Note**: The file `~/.claude/settings.json` is NOT used for MCP server configuration (it's only for permissions). Always use `~/.claude.json` for global MCP server configuration.
-
-#### Option 1: Global Configuration (Recommended)
-
-Create or edit `~/.claude.json`:
+Add to your `~/.claude/config.json`:
 
 ```json
 {
   "mcpServers": {
-    "conversation-memory": {
-      "command": "claude-conversation-memory-mcp"
+    "writers-aid": {
+      "command": "node",
+      "args": [
+        "/path/to/claude-writers-aid-mcp/dist/index.js"
+      ]
     }
   }
 }
 ```
 
-#### Option 2: Project-Level Configuration
-
-Create `.mcp.json` in your project root:
-
-```json
-{
-  "mcpServers": {
-    "conversation-memory": {
-      "command": "claude-conversation-memory-mcp"
-    }
-  }
-}
-```
-
-**Alternative: Use npx without global install**
-
-```json
-{
-  "mcpServers": {
-    "conversation-memory": {
-      "command": "npx",
-      "args": ["-y", "claude-conversation-memory-mcp"]
-    }
-  }
-}
-```
+Replace `/path/to/` with the actual path where you cloned the repository.
 
 ### Verify Installation
 
-Start Claude Code CLI and ask:
+Restart Claude Code CLI and test with:
 
 ```
-"Index my conversation history"
+"Index my manuscript files"
+"Check my manuscript for quality issues"
+"Show writing statistics"
 ```
 
-If you see a response like "Indexed 3 conversations with 1247 messages", it's working!
+If the MCP tools are working, you'll see analysis results and statistics!
 
 ### Important: Restarting After Updates
 
