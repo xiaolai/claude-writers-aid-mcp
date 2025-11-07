@@ -32,7 +32,24 @@ Writer's Aid MCP stores manuscript data in `.writers-aid/manuscript.db` within y
 1. **Claude Code CLI**: https://github.com/anthropics/claude-code
 2. **Node.js**: Version 18 or higher
 
-### Install the MCP Server
+### Quick Install (Recommended)
+
+Install globally from npm:
+
+```bash
+# Install the package globally
+npm install -g claude-writers-aid-mcp
+
+# Auto-configure for Claude Code CLI
+writers-aid init-mcp
+```
+
+That's it! The `init-mcp` command automatically:
+- Detects your installation paths
+- Configures `~/.claude.json` with the correct settings
+- Provides next steps for verification
+
+### Alternative: Development Install
 
 For local development/use from this repository:
 
@@ -46,16 +63,20 @@ npm install
 
 # Build the project
 npm run build
+
+# Configure MCP server
+npm run init-mcp
 ```
 
-### Configure Claude Code CLI
+### Manual Configuration (Advanced)
 
-Add to your `~/.claude/config.json`:
+If you prefer manual setup, add to your `~/.claude.json` (NOT `~/.claude/config.json`):
 
 ```json
 {
   "mcpServers": {
     "writers-aid": {
+      "type": "stdio",
       "command": "node",
       "args": [
         "/path/to/claude-writers-aid-mcp/dist/index.js"
@@ -65,9 +86,15 @@ Add to your `~/.claude/config.json`:
 }
 ```
 
-Replace `/path/to/` with the actual path where you cloned the repository.
+Replace `/path/to/` with the actual path where you installed the package.
 
 ### Verify Installation
+
+Check your MCP configuration:
+
+```bash
+writers-aid mcp-status
+```
 
 Restart Claude Code CLI and test with:
 
@@ -78,6 +105,21 @@ Restart Claude Code CLI and test with:
 ```
 
 If the MCP tools are working, you'll see analysis results and statistics!
+
+### MCP Configuration Commands
+
+The package includes commands to manage your Claude Code MCP configuration:
+
+```bash
+# Check MCP configuration status
+writers-aid mcp-status
+
+# Configure or update MCP server
+writers-aid init-mcp
+
+# Remove MCP configuration
+writers-aid remove-mcp
+```
 
 ### Important: Restarting After Updates
 

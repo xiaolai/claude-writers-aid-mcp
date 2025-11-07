@@ -8,6 +8,12 @@ import chalk from "chalk";
 import Table from "cli-table3";
 import fs from "fs";
 import path from "path";
+import {
+  addWritersAidMCP,
+  removeWritersAidMCP,
+  checkWritersAidMCP,
+  getClaudeConfigPath,
+} from "./mcp-config.js";
 
 export function createCLI(): Command {
   const program = new Command();
@@ -64,6 +70,93 @@ export function createCLI(): Command {
         console.log(chalk.gray(`${key}: <value>`));
       } else if (action === "set" && key && value) {
         console.log(chalk.green(`✓ Set ${key} = ${value}`));
+      }
+    });
+
+  program
+    .command("init-mcp")
+    .description("Configure writers-aid as MCP server for Claude Code")
+    .action(async () => {
+      try {
+        console.log(chalk.blue("Configuring writers-aid MCP server..."));
+
+        const result = addWritersAidMCP();
+
+        if (result.alreadyExists) {
+          console.log(chalk.yellow("⚠ " + result.message));
+        } else {
+          console.log(chalk.green("✓ " + result.message));
+        }
+
+        console.log();
+        console.log(chalk.blue("MCP Server Configuration:"));
+        console.log(chalk.gray(`  Config file: ${getClaudeConfigPath()}`));
+        console.log(chalk.gray(`  Command: ${result.config.command}`));
+        console.log(chalk.gray(`  Script: ${result.config.args[0]}`));
+        console.log();
+        console.log(chalk.green("Next steps:"));
+        console.log(chalk.gray("  1. Restart any running Claude Code sessions"));
+        console.log(chalk.gray("  2. Run /mcp in Claude Code to verify connection"));
+        console.log(chalk.gray("  3. Start using writers-aid tools in your writing projects!"));
+      } catch (error) {
+        console.error(chalk.red("✗ MCP configuration failed:"), error);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("remove-mcp")
+    .description("Remove writers-aid MCP server configuration")
+    .action(async () => {
+      try {
+        const check = checkWritersAidMCP();
+
+        if (!check.configured) {
+          console.log(chalk.yellow("⚠ writers-aid is not configured as MCP server"));
+          return;
+        }
+
+        console.log(chalk.blue("Removing writers-aid MCP configuration..."));
+
+        const result = removeWritersAidMCP();
+
+        if (result.existed) {
+          console.log(chalk.green("✓ " + result.message));
+          console.log(chalk.gray("  Restart Claude Code sessions for changes to take effect"));
+        } else {
+          console.log(chalk.gray(result.message));
+        }
+      } catch (error) {
+        console.error(chalk.red("✗ MCP removal failed:"), error);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command("mcp-status")
+    .description("Check writers-aid MCP server configuration status")
+    .action(async () => {
+      try {
+        const configPath = getClaudeConfigPath();
+        const check = checkWritersAidMCP();
+
+        console.log(chalk.blue("MCP Configuration Status:\n"));
+        console.log(chalk.gray(`Config file: ${configPath}`));
+
+        if (!check.configured) {
+          console.log(chalk.yellow("⚠ writers-aid is NOT configured as MCP server"));
+          console.log();
+          console.log(chalk.gray("Run: writers-aid init-mcp"));
+        } else {
+          console.log(chalk.green("✓ writers-aid is configured as MCP server"));
+          console.log();
+          console.log(chalk.blue("Configuration:"));
+          console.log(chalk.gray(`  Command: ${check.config?.command}`));
+          console.log(chalk.gray(`  Script: ${check.config?.args[0]}`));
+        }
+      } catch (error) {
+        console.error(chalk.red("✗ Status check failed:"), error);
+        process.exit(1);
       }
     });
 
