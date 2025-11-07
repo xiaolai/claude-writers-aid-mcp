@@ -38,18 +38,16 @@ export type {
   ProgressReport,
 } from "./markdown/types.js";
 
-// Run if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  // Detect mode: CLI if arguments provided, MCP server otherwise
-  const hasCliArgs = process.argv.length > 2;
+// Detect mode: CLI if arguments provided, MCP server otherwise
+const hasCliArgs = process.argv.length > 2;
 
-  if (hasCliArgs) {
-    // CLI mode - run commands
-    const program = createCLI();
-    program.parse(process.argv);
-  } else {
-    // MCP server mode - start stdio server
-    const server = new Server(
+if (hasCliArgs) {
+  // CLI mode - run commands
+  const program = createCLI();
+  program.parse(process.argv);
+} else {
+  // MCP server mode - start stdio server
+  const server = new Server(
       {
         name: "writers-aid",
         version: "0.1.0",
@@ -109,5 +107,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     });
 
     console.error("Writer's Aid MCP v0.1.0 - Server started");
-  }
 }
