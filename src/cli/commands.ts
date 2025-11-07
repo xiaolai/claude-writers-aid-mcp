@@ -8,6 +8,7 @@ import chalk from "chalk";
 import Table from "cli-table3";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   addWritersAidMCP,
   removeWritersAidMCP,
@@ -15,13 +16,20 @@ import {
   getClaudeConfigPath,
 } from "./mcp-config.js";
 
+// Get package.json version
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const packageJsonPath = path.join(__dirname, "../../package.json");
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8")) as { version: string };
+const VERSION = packageJson.version;
+
 export function createCLI(): Command {
   const program = new Command();
 
   program
     .name("writers-aid")
     .description("AI-powered manuscript assistant for writers")
-    .version("0.1.0");
+    .version(VERSION);
 
   // ============================================================================
   // Setup Commands

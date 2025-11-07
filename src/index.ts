@@ -15,6 +15,16 @@ import { WritersAid } from "./WritersAid.js";
 import { writerToolDefinitions } from "./tools/WriterToolDefinitions.js";
 import { WriterToolHandlers } from "./tools/WriterToolHandlers.js";
 import { createCLI } from "./cli/commands.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Get package.json version
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const packageJsonPath = path.join(__dirname, "../package.json");
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8")) as { version: string };
+const VERSION = packageJson.version;
 
 // Export core components
 export { WritersAid } from "./WritersAid.js";
@@ -50,7 +60,7 @@ if (hasCliArgs) {
   const server = new Server(
       {
         name: "writers-aid",
-        version: "0.2.0",
+        version: VERSION,
       },
       {
         capabilities: {
@@ -112,5 +122,5 @@ if (hasCliArgs) {
       process.exit(1);
     });
 
-    console.error("Writer's Aid MCP v0.2.1 - Server started");
+    console.error(`Writer's Aid MCP v${VERSION} - Server started`);
 }
