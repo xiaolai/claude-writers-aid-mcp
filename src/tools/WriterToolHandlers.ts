@@ -3,6 +3,7 @@
  */
 
 import { WritersAid } from "../WritersAid.js";
+import { resolvePaginationLimit } from "../utils/pagination.js";
 
 export class WriterToolHandlers {
   constructor(private writersAid: WritersAid) {}
@@ -103,8 +104,9 @@ export class WriterToolHandlers {
 
   private async findGaps(args: Record<string, unknown>) {
     const scope = args.scope as string | undefined;
+    const limit = resolvePaginationLimit("find_gaps", args.limit as number | undefined);
 
-    return this.writersAid.findGaps({ scope });
+    return this.writersAid.findGaps({ scope, limit });
   }
 
   // Structure Tools
@@ -174,8 +176,9 @@ export class WriterToolHandlers {
   private async findBrokenLinks(args: Record<string, unknown>) {
     const checkExternal = (args.check_external as boolean) || false;
     const scope = args.scope as string | undefined;
+    const limit = resolvePaginationLimit("find_broken_links", args.limit as number | undefined);
 
-    return this.writersAid.checkLinks({ checkExternal, scope });
+    return this.writersAid.checkLinks({ checkExternal, scope, limit });
   }
 
   private async suggestCrossReferences(args: Record<string, unknown>) {
@@ -214,16 +217,19 @@ export class WriterToolHandlers {
     const scope = args.scope as string | undefined;
     const autoDetect = (args.auto_detect as boolean) ?? true;
     const terms = args.terms as string[] | undefined;
+    const limit = resolvePaginationLimit("check_terminology", args.limit as number | undefined);
+    const examplesPerVariant = (args.examples_per_variant as number) || 3;
 
-    return this.writersAid.checkTerminology({ scope, autoDetect, terms });
+    return this.writersAid.checkTerminology({ scope, autoDetect, terms, limit, examplesPerVariant });
   }
 
   private async findTodos(args: Record<string, unknown>) {
     const scope = args.scope as string | undefined;
     const markers = args.markers as string[] | undefined;
     const groupBy = args.group_by as "file" | "priority" | "marker" | undefined;
+    const limit = resolvePaginationLimit("find_todos", args.limit as number | undefined);
 
-    return this.writersAid.findTodos({ scope, markers, groupBy });
+    return this.writersAid.findTodos({ scope, markers, groupBy, limit });
   }
 
   private async checkReadability(args: Record<string, unknown>) {
@@ -236,8 +242,9 @@ export class WriterToolHandlers {
     const scope = args.scope as string | undefined;
     const similarityThreshold = (args.similarity_threshold as number) || 0.8;
     const minLength = (args.min_length as number) || 50;
+    const limit = resolvePaginationLimit("find_duplicates", args.limit as number | undefined);
 
-    return this.writersAid.findDuplicates({ scope, similarityThreshold, minLength });
+    return this.writersAid.findDuplicates({ scope, similarityThreshold, minLength, limit });
   }
 
   // Progress Tools

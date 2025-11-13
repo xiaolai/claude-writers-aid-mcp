@@ -3,6 +3,7 @@
  */
 
 import { WritingStorage } from "../storage/WritingStorage.js";
+import { paginateResults } from "../utils/pagination.js";
 
 export interface TermGap {
   term: string;
@@ -14,7 +15,8 @@ export interface TermGap {
 export class GapFinder {
   constructor(private storage: WritingStorage) {}
 
-  async findGaps(_options: { scope?: string }): Promise<TermGap[]> {
+  async findGaps(options: { scope?: string; limit?: number }): Promise<TermGap[]> {
+    const { limit } = options;
     const files = await this.storage.getAllFiles();
     const termMentions = new Map<string, { count: number; files: Set<string> }>();
     const definedTerms = new Set<string>();
@@ -55,7 +57,8 @@ export class GapFinder {
       }
     }
 
-    return gaps.sort((a, b) => b.mentions - a.mentions);
+    const sorted = gaps.sort((a, b) => b.mentions - a.mentions);
+    return paginateResults(sorted, limit);
   }
 
   private extractTerms(content: string): string[] {

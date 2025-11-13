@@ -5,6 +5,7 @@
  */
 
 import { WritingStorage } from "../storage/WritingStorage.js";
+import { paginateResults } from "../utils/pagination.js";
 
 export interface TermVariant {
   term: string;
@@ -36,15 +37,17 @@ export class TerminologyChecker {
     scope?: string;
     autoDetect?: boolean;
     terms?: string[];
+    limit?: number;
+    examplesPerVariant?: number;
   }): Promise<TerminologyReport> {
-    const { scope, autoDetect = true, terms } = options;
+    const { scope, autoDetect = true, terms, limit, examplesPerVariant = 3 } = options;
 
     if (terms && terms.length > 0) {
-      return this.checkSpecificTerms(terms, scope);
+      return this.checkSpecificTerms(terms, scope, limit, examplesPerVariant);
     }
 
     if (autoDetect) {
-      return this.autoDetectVariants(scope);
+      return this.autoDetectVariants(scope, limit, examplesPerVariant);
     }
 
     return {
@@ -59,13 +62,15 @@ export class TerminologyChecker {
    */
   private async checkSpecificTerms(
     terms: string[],
-    scope?: string
+    scope?: string,
+    limit?: number,
+    examplesPerVariant?: number
   ): Promise<TerminologyReport> {
     const groups: TermGroup[] = [];
     const filesAffected = new Set<string>();
 
     for (const term of terms) {
-      const variants = await this.findVariantsForTerm(term, scope);
+      const variants = await this.findVariantsForTerm(term, scope, examplesPerVariant);
 
       if (variants.length > 1) {
         // Multiple variants found - inconsistency detected
@@ -76,8 +81,10 @@ export class TerminologyChecker {
       }
     }
 
+    const limitedGroups = paginateResults(groups, limit);
+
     return {
-      groups,
+      groups: limitedGroups,
       totalIssues: groups.length,
       filesAffected: filesAffected.size,
     };
@@ -86,7 +93,11 @@ export class TerminologyChecker {
   /**
    * Auto-detect term variants by analyzing content
    */
-  private async autoDetectVariants(scope?: string): Promise<TerminologyReport> {
+  private async autoDetectVariants(
+    scope?: string,
+    limit?: number,
+    examplesPerVariant = 3
+  ): Promise<TerminologyReport> {
     // Get all files
     const files = await this.storage.getAllFiles();
     const termCounts = new Map<string, Map<string, number>>();
@@ -123,7 +134,7 @@ export class TerminologyChecker {
         const variants: TermVariant[] = [];
 
         for (const [variant, count] of variantMap) {
-          const examples = await this.findExamples(variant, scope, 3);
+          const examples = await this.findExamples(variant, scope, examplesPerVariant);
           const variantFiles = examples.map((e) => e.file);
 
           variants.push({
@@ -154,8 +165,10 @@ export class TerminologyChecker {
       return severityOrder[b.inconsistency] - severityOrder[a.inconsistency];
     });
 
+    const limitedGroups = paginateResults(groups, limit);
+
     return {
-      groups,
+      groups: limitedGroups,
       totalIssues: groups.length,
       filesAffected: filesAffected.size,
     };
@@ -166,7 +179,8 @@ export class TerminologyChecker {
    */
   private async findVariantsForTerm(
     term: string,
-    scope?: string
+    scope?: string,
+    examplesPerVariant = 3
   ): Promise<TermVariant[]> {
     const files = await this.storage.getAllFiles();
     const variantCounts = new Map<string, number>();
@@ -197,7 +211,7 @@ export class TerminologyChecker {
     const variants: TermVariant[] = [];
 
     for (const [variant, count] of variantCounts) {
-      const examples = await this.findExamples(variant, scope, 3);
+      const examples = await this.findExamples(variant, scope, examplesPerVariant);
       const files = Array.from(variantFiles.get(variant) || []);
 
       variants.push({

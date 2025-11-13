@@ -3,6 +3,7 @@
  */
 
 import { WritingStorage } from "../storage/WritingStorage.js";
+import { paginateResults } from "../utils/pagination.js";
 
 export interface DuplicateMatch {
   file1: string;
@@ -20,8 +21,9 @@ export class DuplicateFinder {
     scope?: string;
     similarityThreshold?: number;
     minLength?: number;
+    limit?: number;
   }): Promise<DuplicateMatch[]> {
-    const { similarityThreshold = 0.8, minLength = 50 } = options;
+    const { similarityThreshold = 0.8, minLength = 50, limit } = options;
 
     const files = await this.storage.getAllFiles();
     const matches: DuplicateMatch[] = [];
@@ -38,7 +40,9 @@ export class DuplicateFinder {
       }
     }
 
-    return matches;
+    // Sort by similarity (highest first) before pagination
+    const sorted = matches.sort((a, b) => b.similarity - a.similarity);
+    return paginateResults(sorted, limit);
   }
 
   private compareFiles(

@@ -3,6 +3,7 @@
  */
 
 import { WritingStorage } from "../storage/WritingStorage.js";
+import { paginateResults } from "../utils/pagination.js";
 
 export interface LinkIssue {
   file: string;
@@ -19,8 +20,9 @@ export class LinkHealthChecker {
   async checkLinks(options: {
     checkExternal?: boolean;
     scope?: string;
+    limit?: number;
   }): Promise<LinkIssue[]> {
-    const { checkExternal = false } = options;
+    const { checkExternal = false, limit } = options;
 
     const files = await this.storage.getAllFiles();
     const fileSet = new Set(files.map((f) => f.file_path));
@@ -53,7 +55,7 @@ export class LinkHealthChecker {
       }
     }
 
-    return issues;
+    return paginateResults(issues, limit);
   }
 
   private extractLinks(

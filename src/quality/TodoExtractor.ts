@@ -3,6 +3,7 @@
  */
 
 import { WritingStorage } from "../storage/WritingStorage.js";
+import { paginateResults } from "../utils/pagination.js";
 
 export interface TodoItem {
   file: string;
@@ -19,8 +20,9 @@ export class TodoExtractor {
     scope?: string;
     markers?: string[];
     groupBy?: "file" | "priority" | "marker";
+    limit?: number;
   }): Promise<TodoItem[]> {
-    const { markers = ["TODO", "FIXME", "HACK", "XXX", "DRAFT", "WIP"] } = options;
+    const { markers = ["TODO", "FIXME", "HACK", "XXX", "DRAFT", "WIP"], limit } = options;
 
     const files = await this.storage.getAllFiles();
     const todos: TodoItem[] = [];
@@ -48,7 +50,7 @@ export class TodoExtractor {
       }
     }
 
-    return todos;
+    return paginateResults(todos, limit);
   }
 
   private determinePriority(marker: string): "high" | "medium" | "low" {

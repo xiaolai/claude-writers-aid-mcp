@@ -163,6 +163,8 @@ export class WritersAid {
     scope?: string;
     autoDetect?: boolean;
     terms?: string[];
+    limit?: number;
+    examplesPerVariant?: number;
   }) {
     return this.terminologyChecker.checkTerminology(options || {});
   }
@@ -188,6 +190,7 @@ export class WritersAid {
     scope?: string;
     similarityThreshold?: number;
     minLength?: number;
+    limit?: number;
   }) {
     return this.duplicateFinder.findDuplicates(options || {});
   }
@@ -195,7 +198,7 @@ export class WritersAid {
   /**
    * Find content gaps (undefined terms)
    */
-  async findGaps(options?: { scope?: string }) {
+  async findGaps(options?: { scope?: string; limit?: number }) {
     return this.gapFinder.findGaps(options || {});
   }
 
@@ -206,6 +209,7 @@ export class WritersAid {
     scope?: string;
     markers?: string[];
     groupBy?: "file" | "priority" | "marker";
+    limit?: number;
   }) {
     return this.todoExtractor.findTodos(options || {});
   }
@@ -213,7 +217,7 @@ export class WritersAid {
   /**
    * Check link health
    */
-  async checkLinks(options?: { checkExternal?: boolean; scope?: string }) {
+  async checkLinks(options?: { checkExternal?: boolean; scope?: string; limit?: number }) {
     return this.linkHealthChecker.checkLinks(options || {});
   }
 
