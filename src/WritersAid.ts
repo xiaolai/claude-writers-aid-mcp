@@ -21,6 +21,8 @@ import { ConsistencyChecker } from "./quality/ConsistencyChecker.js";
 import { SessionManager } from "./memory/SessionManager.js";
 import { DecisionExtractor } from "./memory/DecisionExtractor.js";
 import { SessionIndexer } from "./memory/SessionIndexer.js";
+import { MistakeTracker } from "./memory/MistakeTracker.js";
+import { RequirementsManager } from "./memory/RequirementsManager.js";
 import fs from "fs";
 import path from "path";
 
@@ -48,6 +50,8 @@ export class WritersAid {
   private sessionManager: SessionManager;
   private decisionExtractor: DecisionExtractor;
   private sessionIndexer: SessionIndexer;
+  private mistakeTracker: MistakeTracker;
+  private requirementsManager: RequirementsManager;
 
   constructor(private config: WritersAidConfig) {
     // Determine database path
@@ -91,6 +95,8 @@ export class WritersAid {
     this.sessionManager = new SessionManager(sqliteManager);
     this.decisionExtractor = new DecisionExtractor(sqliteManager);
     this.sessionIndexer = new SessionIndexer(sqliteManager);
+    this.mistakeTracker = new MistakeTracker(sqliteManager);
+    this.requirementsManager = new RequirementsManager(sqliteManager);
   }
 
   /**
@@ -426,6 +432,181 @@ export class WritersAid {
       sessionsIndexed: result.sessionsIndexed,
       decisionsExtracted: result.decisionsExtracted,
       filesProcessed: result.filesProcessed,
+    };
+  }
+
+  // ============================================================================
+  // Mistake Tracking (Phase 2)
+  // ============================================================================
+
+  /**
+   * Mark a writing mistake
+   */
+  markMistake(options: {
+    filePath: string;
+    lineRange?: string;
+    mistakeType:
+      | "logical_fallacy"
+      | "factual_error"
+      | "poor_structure"
+      | "inconsistency"
+      | "unclear_writing"
+      | "citation_error"
+      | "redundancy"
+      | "other";
+    description: string;
+    correction?: string;
+  }) {
+    const mistake = this.mistakeTracker.markMistake({
+      filePath: options.filePath,
+      lineRange: options.lineRange,
+      mistakeType: options.mistakeType,
+      description: options.description,
+      correction: options.correction,
+      timestamp: Date.now(),
+    });
+
+    return {
+      id: mistake.id,
+      filePath: mistake.filePath,
+      mistakeType: mistake.mistakeType,
+      description: mistake.description,
+      timestamp: new Date(mistake.timestamp).toISOString(),
+    };
+  }
+
+  /**
+   * Search for similar mistakes
+   */
+  searchSimilarMistakes(options: { description: string; limit?: number }) {
+    const mistakes = this.mistakeTracker.searchSimilarMistakes(
+      options.description,
+      options.limit || 5
+    );
+
+    return {
+      matches: mistakes.map((m) => ({
+        id: m.id,
+        filePath: m.filePath,
+        mistakeType: m.mistakeType,
+        description: m.description,
+        correction: m.correction,
+        howFixed: m.howFixed,
+        timestamp: new Date(m.timestamp).toISOString(),
+      })),
+      total: mistakes.length,
+    };
+  }
+
+  // ============================================================================
+  // Requirements Management (Phase 2)
+  // ============================================================================
+
+  /**
+   * Set a publisher or style requirement
+   */
+  setRequirement(options: {
+    requirementType:
+      | "word_count"
+      | "citation_style"
+      | "formatting"
+      | "deadline"
+      | "target_audience"
+      | "tone"
+      | "reading_level"
+      | "chapter_count"
+      | "other";
+    description: string;
+    value?: string;
+    enforced?: boolean;
+  }) {
+    const requirement = this.requirementsManager.addRequirement({
+      requirementType: options.requirementType,
+      description: options.description,
+      value: options.value,
+      enforced: options.enforced || false,
+    });
+
+    return {
+      id: requirement.id,
+      requirementType: requirement.requirementType,
+      description: requirement.description,
+      value: requirement.value,
+      enforced: requirement.enforced,
+    };
+  }
+
+  /**
+   * Get requirements
+   */
+  getRequirements(options?: {
+    requirementType?:
+      | "word_count"
+      | "citation_style"
+      | "formatting"
+      | "deadline"
+      | "target_audience"
+      | "tone"
+      | "reading_level"
+      | "chapter_count"
+      | "other";
+    enforcedOnly?: boolean;
+  }) {
+    let requirements;
+
+    if (options?.requirementType) {
+      requirements = this.requirementsManager.getRequirementsByType(
+        options.requirementType
+      );
+    } else if (options?.enforcedOnly) {
+      requirements = this.requirementsManager.getAllRequirements(true);
+    } else {
+      requirements = this.requirementsManager.getAllRequirements();
+    }
+
+    return {
+      requirements: requirements.map((r) => ({
+        id: r.id,
+        requirementType: r.requirementType,
+        description: r.description,
+        value: r.value,
+        enforced: r.enforced,
+      })),
+      total: requirements.length,
+    };
+  }
+
+  /**
+   * Add a style decision
+   */
+  addStyleDecision(options: {
+    category:
+      | "terminology"
+      | "formatting"
+      | "citations"
+      | "tone"
+      | "headings"
+      | "lists"
+      | "code_blocks"
+      | "quotes"
+      | "other";
+    canonicalChoice: string;
+    rationale?: string;
+    examples?: string[];
+  }) {
+    const decision = this.requirementsManager.addStyleDecision({
+      category: options.category,
+      canonicalChoice: options.canonicalChoice,
+      rationale: options.rationale,
+      examples: options.examples,
+    });
+
+    return {
+      id: decision.id,
+      category: decision.category,
+      canonicalChoice: decision.canonicalChoice,
+      rationale: decision.rationale,
+      examples: decision.examples,
     };
   }
 

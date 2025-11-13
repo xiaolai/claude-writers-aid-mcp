@@ -60,13 +60,25 @@ export class WriterToolHandlers {
       case "generate_progress_report":
         return this.generateProgressReport(args);
 
-      // Holistic Memory
+      // Holistic Memory - Phase 1
       case "recall_writing_session":
         return this.recallWritingSession(args);
       case "get_session_context":
         return this.getSessionContext(args);
       case "list_writing_decisions":
         return this.listWritingDecisions(args);
+
+      // Holistic Memory - Phase 2
+      case "mark_mistake":
+        return this.markMistake(args);
+      case "search_similar_mistakes":
+        return this.searchSimilarMistakes(args);
+      case "set_requirement":
+        return this.setRequirement(args);
+      case "get_requirements":
+        return this.getRequirements(args);
+      case "add_style_decision":
+        return this.addStyleDecision(args);
 
       default:
         throw new Error(`Unknown tool: ${toolName}`);
@@ -336,6 +348,101 @@ export class WriterToolHandlers {
       filePath,
       decisionType,
       limit,
+    });
+  }
+
+  // Holistic Memory - Phase 2 Tools
+  private async markMistake(args: Record<string, unknown>) {
+    const filePath = args.file_path as string;
+    const lineRange = args.line_range as string | undefined;
+    const mistakeType = args.mistake_type as
+      | "logical_fallacy"
+      | "factual_error"
+      | "poor_structure"
+      | "inconsistency"
+      | "unclear_writing"
+      | "citation_error"
+      | "redundancy"
+      | "other";
+    const description = args.description as string;
+    const correction = args.correction as string | undefined;
+
+    return this.writersAid.markMistake({
+      filePath,
+      lineRange,
+      mistakeType,
+      description,
+      correction,
+    });
+  }
+
+  private async searchSimilarMistakes(args: Record<string, unknown>) {
+    const description = args.description as string;
+    const limit = (args.limit as number) || 5;
+
+    return this.writersAid.searchSimilarMistakes({ description, limit });
+  }
+
+  private async setRequirement(args: Record<string, unknown>) {
+    const requirementType = args.requirement_type as
+      | "word_count"
+      | "citation_style"
+      | "formatting"
+      | "deadline"
+      | "target_audience"
+      | "tone"
+      | "reading_level"
+      | "chapter_count"
+      | "other";
+    const description = args.description as string;
+    const value = args.value as string | undefined;
+    const enforced = (args.enforced as boolean) || false;
+
+    return this.writersAid.setRequirement({
+      requirementType,
+      description,
+      value,
+      enforced,
+    });
+  }
+
+  private async getRequirements(args: Record<string, unknown>) {
+    const requirementType = args.requirement_type as
+      | "word_count"
+      | "citation_style"
+      | "formatting"
+      | "deadline"
+      | "target_audience"
+      | "tone"
+      | "reading_level"
+      | "chapter_count"
+      | "other"
+      | undefined;
+    const enforcedOnly = args.enforced_only as boolean | undefined;
+
+    return this.writersAid.getRequirements({ requirementType, enforcedOnly });
+  }
+
+  private async addStyleDecision(args: Record<string, unknown>) {
+    const category = args.category as
+      | "terminology"
+      | "formatting"
+      | "citations"
+      | "tone"
+      | "headings"
+      | "lists"
+      | "code_blocks"
+      | "quotes"
+      | "other";
+    const canonicalChoice = args.canonical_choice as string;
+    const rationale = args.rationale as string | undefined;
+    const examples = args.examples as string[] | undefined;
+
+    return this.writersAid.addStyleDecision({
+      category,
+      canonicalChoice,
+      rationale,
+      examples,
     });
   }
 

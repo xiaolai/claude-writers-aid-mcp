@@ -320,7 +320,7 @@ export const writerToolDefinitions = [
     },
   },
 
-  // Holistic Memory Tools (3) - Phase 1
+  // Holistic Memory Tools - Phase 1: Sessions & Decisions (3)
   {
     name: "recall_writing_session",
     description: "Search writing session history by date range or query",
@@ -362,6 +362,99 @@ export const writerToolDefinitions = [
         },
         limit: { type: "number", description: "Maximum decisions to return", default: 20 },
       },
+    },
+  },
+
+  // Holistic Memory Tools - Phase 2: Mistakes & Requirements (5)
+  {
+    name: "mark_mistake",
+    description: "Record a writing mistake to avoid repeating it",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        file_path: { type: "string", description: "File where mistake occurred" },
+        line_range: { type: "string", description: "Line range (e.g., '45-52')" },
+        mistake_type: {
+          type: "string",
+          enum: ["logical_fallacy", "factual_error", "poor_structure", "inconsistency", "unclear_writing", "citation_error", "redundancy", "other"],
+          description: "Type of mistake",
+        },
+        description: { type: "string", description: "Description of the mistake" },
+        correction: { type: "string", description: "How it should be corrected" },
+      },
+      required: ["file_path", "mistake_type", "description"],
+    },
+  },
+  {
+    name: "search_similar_mistakes",
+    description: "Search for similar mistakes to avoid repeating them",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        description: { type: "string", description: "Description to search for similar mistakes" },
+        limit: { type: "number", description: "Maximum results", default: 5 },
+      },
+      required: ["description"],
+    },
+  },
+  {
+    name: "set_requirement",
+    description: "Store a publisher or style requirement",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        requirement_type: {
+          type: "string",
+          enum: ["word_count", "citation_style", "formatting", "deadline", "target_audience", "tone", "reading_level", "chapter_count", "other"],
+          description: "Type of requirement",
+        },
+        description: { type: "string", description: "Description of the requirement" },
+        value: { type: "string", description: "Target value (e.g., '50000' for word count)" },
+        enforced: { type: "boolean", description: "Whether this requirement is enforced", default: false },
+      },
+      required: ["requirement_type", "description"],
+    },
+  },
+  {
+    name: "get_requirements",
+    description: "Get all requirements or filter by type",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        requirement_type: {
+          type: "string",
+          enum: ["word_count", "citation_style", "formatting", "deadline", "target_audience", "tone", "reading_level", "chapter_count", "other"],
+          description: "Filter by requirement type",
+        },
+        enforced_only: { type: "boolean", description: "Show only enforced requirements" },
+      },
+    },
+  },
+  {
+    name: "add_style_decision",
+    description: "Record a style decision for consistency",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        category: {
+          type: "string",
+          enum: ["terminology", "formatting", "citations", "tone", "headings", "lists", "code_blocks", "quotes", "other"],
+          description: "Style category",
+        },
+        canonical_choice: { type: "string", description: "The chosen canonical form" },
+        rationale: { type: "string", description: "Why this choice was made" },
+        examples: {
+          type: "array",
+          items: { type: "string" },
+          description: "Example usages",
+        },
+      },
+      required: ["category", "canonical_choice"],
     },
   },
 ];

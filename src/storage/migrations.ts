@@ -93,6 +93,75 @@ export const migrations: Migration[] = [
       DROP TABLE IF EXISTS writing_memory_fts;
     `,
   },
+  {
+    version: 3,
+    description: "Add holistic memory Phase 2: Mistake tracking and requirements",
+    up: `
+      -- Writing mistakes (errors to avoid repeating)
+      CREATE TABLE IF NOT EXISTS writing_mistakes (
+        id TEXT PRIMARY KEY,
+        session_id TEXT,
+        file_path TEXT NOT NULL,
+        line_range TEXT,
+        mistake_type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        correction TEXT,
+        how_fixed TEXT,
+        timestamp INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES writing_sessions(id) ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_mistake_session ON writing_mistakes(session_id);
+      CREATE INDEX IF NOT EXISTS idx_mistake_file ON writing_mistakes(file_path);
+      CREATE INDEX IF NOT EXISTS idx_mistake_type ON writing_mistakes(mistake_type);
+      CREATE INDEX IF NOT EXISTS idx_mistake_timestamp ON writing_mistakes(timestamp);
+
+      -- Publisher requirements & constraints
+      CREATE TABLE IF NOT EXISTS writing_requirements (
+        id TEXT PRIMARY KEY,
+        requirement_type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        value TEXT,
+        enforced BOOLEAN DEFAULT FALSE,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_requirement_type ON writing_requirements(requirement_type);
+      CREATE INDEX IF NOT EXISTS idx_requirement_enforced ON writing_requirements(enforced);
+
+      -- Style decisions (canonical choices)
+      CREATE TABLE IF NOT EXISTS style_decisions (
+        id TEXT PRIMARY KEY,
+        category TEXT NOT NULL,
+        canonical_choice TEXT NOT NULL,
+        alternatives_rejected TEXT,
+        rationale TEXT,
+        examples TEXT,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_style_category ON style_decisions(category);
+
+      -- Mistake embeddings for semantic search
+      CREATE TABLE IF NOT EXISTS mistake_embeddings (
+        id TEXT PRIMARY KEY,
+        mistake_id TEXT NOT NULL,
+        embedding BLOB NOT NULL,
+        model_name TEXT DEFAULT 'all-MiniLM-L6-v2',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (mistake_id) REFERENCES writing_mistakes(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_mistake_embed ON mistake_embeddings(mistake_id);
+    `,
+    down: `
+      DROP TABLE IF EXISTS mistake_embeddings;
+      DROP TABLE IF EXISTS style_decisions;
+      DROP TABLE IF EXISTS writing_requirements;
+      DROP TABLE IF EXISTS writing_mistakes;
+    `,
+  },
 ];
 
 export class MigrationManager {
