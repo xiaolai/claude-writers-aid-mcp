@@ -60,6 +60,14 @@ export class WriterToolHandlers {
       case "generate_progress_report":
         return this.generateProgressReport(args);
 
+      // Holistic Memory
+      case "recall_writing_session":
+        return this.recallWritingSession(args);
+      case "get_session_context":
+        return this.getSessionContext(args);
+      case "list_writing_decisions":
+        return this.listWritingDecisions(args);
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -286,5 +294,84 @@ export class WriterToolHandlers {
       todosRemaining: includeTodos ? todos.length : undefined,
       filesCount: stats.totalFiles,
     };
+  }
+
+  // Holistic Memory Tools
+  private async recallWritingSession(args: Record<string, unknown>) {
+    const startDate = args.start_date
+      ? this.parseDate(args.start_date as string)
+      : undefined;
+    const endDate = args.end_date
+      ? this.parseDate(args.end_date as string)
+      : undefined;
+    const filePath = args.file_path as string | undefined;
+    const limit = (args.limit as number) || 10;
+
+    return this.writersAid.recallWritingSessions({
+      startDate,
+      endDate,
+      filePath,
+      limit,
+    });
+  }
+
+  private async getSessionContext(args: Record<string, unknown>) {
+    const filePath = args.file_path as string | undefined;
+    const limit = (args.limit as number) || 5;
+
+    return this.writersAid.getSessionContext({ filePath, limit });
+  }
+
+  private async listWritingDecisions(args: Record<string, unknown>) {
+    const filePath = args.file_path as string | undefined;
+    const decisionType = args.decision_type as
+      | "structure"
+      | "content"
+      | "terminology"
+      | "style"
+      | undefined;
+    const limit = (args.limit as number) || 20;
+
+    return this.writersAid.listWritingDecisions({
+      filePath,
+      decisionType,
+      limit,
+    });
+  }
+
+  /**
+   * Parse date string (ISO format or relative like "1 week ago")
+   */
+  private parseDate(dateStr: string): Date {
+    // Try ISO format first
+    const isoDate = new Date(dateStr);
+    if (!isNaN(isoDate.getTime())) {
+      return isoDate;
+    }
+
+    // Parse relative dates like "1 week ago", "2 days ago"
+    const relativeMatch = dateStr.match(/(\d+)\s+(day|week|month)s?\s+ago/i);
+    if (relativeMatch) {
+      const amount = parseInt(relativeMatch[1]);
+      const unit = relativeMatch[2].toLowerCase();
+      const now = new Date();
+
+      switch (unit) {
+        case "day":
+          now.setDate(now.getDate() - amount);
+          break;
+        case "week":
+          now.setDate(now.getDate() - amount * 7);
+          break;
+        case "month":
+          now.setMonth(now.getMonth() - amount);
+          break;
+      }
+
+      return now;
+    }
+
+    // Fallback to current date
+    return new Date();
   }
 }

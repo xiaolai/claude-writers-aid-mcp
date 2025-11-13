@@ -23,14 +23,76 @@ export const migrations: Migration[] = [
       -- This migration just records the version
     `,
   },
-  // Future migrations will be added here
-  // Example:
-  // {
-  //   version: 2,
-  //   description: "Add new column for X",
-  //   up: "ALTER TABLE conversations ADD COLUMN new_field TEXT",
-  //   down: "ALTER TABLE conversations DROP COLUMN new_field"
-  // }
+  {
+    version: 2,
+    description: "Add holistic memory Phase 1: Session tracking and decision memory",
+    up: `
+      -- Add checksum column to schema_version if it doesn't exist
+      ALTER TABLE schema_version ADD COLUMN checksum TEXT;
+
+      -- Writing sessions (when/where work happened)
+      CREATE TABLE IF NOT EXISTS writing_sessions (
+        id TEXT PRIMARY KEY,
+        project_path TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        ended_at INTEGER,
+        files_touched TEXT,
+        summary TEXT,
+        conversation_file TEXT,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_session_project ON writing_sessions(project_path);
+      CREATE INDEX IF NOT EXISTS idx_session_started ON writing_sessions(started_at);
+
+      -- Writing decisions (WHY choices were made)
+      CREATE TABLE IF NOT EXISTS writing_decisions (
+        id TEXT PRIMARY KEY,
+        session_id TEXT,
+        file_path TEXT,
+        section TEXT,
+        decision_text TEXT NOT NULL,
+        rationale TEXT,
+        alternatives_considered TEXT,
+        timestamp INTEGER NOT NULL,
+        decision_type TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES writing_sessions(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_decision_session ON writing_decisions(session_id);
+      CREATE INDEX IF NOT EXISTS idx_decision_file ON writing_decisions(file_path);
+      CREATE INDEX IF NOT EXISTS idx_decision_type ON writing_decisions(decision_type);
+      CREATE INDEX IF NOT EXISTS idx_decision_timestamp ON writing_decisions(timestamp);
+
+      -- Session embeddings for semantic search
+      CREATE TABLE IF NOT EXISTS session_embeddings (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        embedding BLOB NOT NULL,
+        model_name TEXT DEFAULT 'all-MiniLM-L6-v2',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES writing_sessions(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_session_embed ON session_embeddings(session_id);
+
+      -- Full-text search for sessions and decisions
+      CREATE VIRTUAL TABLE IF NOT EXISTS writing_memory_fts USING fts5(
+        memory_id UNINDEXED,
+        memory_type UNINDEXED,
+        text,
+        metadata UNINDEXED,
+        tokenize = 'porter unicode61'
+      );
+    `,
+    down: `
+      DROP TABLE IF EXISTS session_embeddings;
+      DROP TABLE IF EXISTS writing_decisions;
+      DROP TABLE IF EXISTS writing_sessions;
+      DROP TABLE IF EXISTS writing_memory_fts;
+    `,
+  },
 ];
 
 export class MigrationManager {

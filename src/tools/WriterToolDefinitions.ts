@@ -319,4 +319,49 @@ export const writerToolDefinitions = [
       },
     },
   },
+
+  // Holistic Memory Tools (3) - Phase 1
+  {
+    name: "recall_writing_session",
+    description: "Search writing session history by date range or query",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        start_date: { type: "string", description: "Start date (ISO format or relative like '1 week ago')" },
+        end_date: { type: "string", description: "End date (ISO format)" },
+        file_path: { type: "string", description: "Filter sessions that touched this file" },
+        limit: { type: "number", description: "Maximum sessions to return", default: 10 },
+      },
+    },
+  },
+  {
+    name: "get_session_context",
+    description: "Get detailed context for a specific file or concept from past sessions",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        file_path: { type: "string", description: "File to get session context for" },
+        limit: { type: "number", description: "Maximum sessions to return", default: 5 },
+      },
+    },
+  },
+  {
+    name: "list_writing_decisions",
+    description: "List writing decisions by file, type, or date range",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        file_path: { type: "string", description: "Filter decisions for this file" },
+        decision_type: {
+          type: "string",
+          enum: ["structure", "content", "terminology", "style"],
+          description: "Filter by decision type",
+        },
+        limit: { type: "number", description: "Maximum decisions to return", default: 20 },
+      },
+    },
+  },
 ];

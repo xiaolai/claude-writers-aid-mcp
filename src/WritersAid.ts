@@ -18,6 +18,9 @@ import { GapFinder } from "./analysis/GapFinder.js";
 import { TodoExtractor } from "./quality/TodoExtractor.js";
 import { LinkHealthChecker } from "./quality/LinkHealthChecker.js";
 import { ConsistencyChecker } from "./quality/ConsistencyChecker.js";
+import { SessionManager } from "./memory/SessionManager.js";
+import { DecisionExtractor } from "./memory/DecisionExtractor.js";
+import { SessionIndexer } from "./memory/SessionIndexer.js";
 import fs from "fs";
 import path from "path";
 
@@ -42,6 +45,9 @@ export class WritersAid {
   private todoExtractor: TodoExtractor;
   private linkHealthChecker: LinkHealthChecker;
   private consistencyChecker: ConsistencyChecker;
+  private sessionManager: SessionManager;
+  private decisionExtractor: DecisionExtractor;
+  private sessionIndexer: SessionIndexer;
 
   constructor(private config: WritersAidConfig) {
     // Determine database path
@@ -80,6 +86,11 @@ export class WritersAid {
     this.todoExtractor = new TodoExtractor(this.storage);
     this.linkHealthChecker = new LinkHealthChecker(this.storage);
     this.consistencyChecker = new ConsistencyChecker(this.storage);
+
+    // Initialize holistic memory components
+    this.sessionManager = new SessionManager(sqliteManager);
+    this.decisionExtractor = new DecisionExtractor(sqliteManager);
+    this.sessionIndexer = new SessionIndexer(sqliteManager);
   }
 
   /**
@@ -275,6 +286,147 @@ export class WritersAid {
 
     walk(dir);
     return files;
+  }
+
+  // ============================================================================
+  // Holistic Memory Tools
+  // ============================================================================
+
+  /**
+   * Recall writing sessions by date range or file
+   */
+  async recallWritingSessions(options: {
+    startDate?: Date;
+    endDate?: Date;
+    filePath?: string;
+    limit?: number;
+  }) {
+    const query = {
+      projectPath: this.config.projectPath,
+      startDate: options.startDate,
+      endDate: options.endDate,
+      fileInvolved: options.filePath,
+      limit: options.limit || 10,
+    };
+
+    const sessions = this.sessionManager.findSessions(query);
+
+    return {
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        startedAt: new Date(session.startedAt).toISOString(),
+        endedAt: session.endedAt
+          ? new Date(session.endedAt).toISOString()
+          : null,
+        filesTouched: session.filesTouched || [],
+        summary: session.summary || "Writing session",
+        conversationFile: session.conversationFile,
+      })),
+      total: sessions.length,
+    };
+  }
+
+  /**
+   * Get session context for a file
+   */
+  async getSessionContext(options: { filePath?: string; limit?: number }) {
+    if (!options.filePath) {
+      return {
+        sessions: [],
+        decisions: [],
+        message: "No file path provided",
+      };
+    }
+
+    const sessions = this.sessionManager.getSessionsForFile(
+      options.filePath,
+      options.limit || 5
+    );
+
+    const decisions = this.decisionExtractor.getDecisionsByFile(
+      options.filePath,
+      options.limit || 5
+    );
+
+    return {
+      file: options.filePath,
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        startedAt: new Date(session.startedAt).toISOString(),
+        summary: session.summary || "Writing session",
+      })),
+      decisions: decisions.map((decision) => ({
+        decisionText: decision.decisionText,
+        rationale: decision.rationale,
+        decisionType: decision.decisionType,
+        timestamp: new Date(decision.timestamp).toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * List writing decisions by file or type
+   */
+  async listWritingDecisions(options: {
+    filePath?: string;
+    decisionType?: "structure" | "content" | "terminology" | "style";
+    limit?: number;
+  }) {
+    let decisions;
+
+    if (options.filePath) {
+      decisions = this.decisionExtractor.getDecisionsByFile(
+        options.filePath,
+        options.limit || 20
+      );
+    } else if (options.decisionType) {
+      decisions = this.decisionExtractor.getDecisionsByType(
+        options.decisionType,
+        options.limit || 20
+      );
+    } else {
+      // Get all recent decisions
+      decisions = this.decisionExtractor.getDecisionsByType(
+        "structure",
+        options.limit || 20
+      );
+    }
+
+    return {
+      decisions: decisions.map((decision) => ({
+        id: decision.id,
+        decisionText: decision.decisionText,
+        rationale: decision.rationale,
+        decisionType: decision.decisionType,
+        filePath: decision.filePath,
+        section: decision.section,
+        timestamp: new Date(decision.timestamp).toISOString(),
+        alternativesConsidered: decision.alternativesConsidered,
+      })),
+      total: decisions.length,
+    };
+  }
+
+  /**
+   * Index writing sessions from conversation history
+   */
+  async indexWritingSessions(options?: {
+    conversationsDir?: string;
+  }): Promise<{
+    sessionsIndexed: number;
+    decisionsExtracted: number;
+    filesProcessed: number;
+  }> {
+    const result = await this.sessionIndexer.indexProject({
+      projectPath: this.config.projectPath,
+      conversationsDir: options?.conversationsDir,
+    });
+
+    return {
+      sessionsIndexed: result.sessionsIndexed,
+      decisionsExtracted: result.decisionsExtracted,
+      filesProcessed: result.filesProcessed,
+    };
   }
 
   /**
