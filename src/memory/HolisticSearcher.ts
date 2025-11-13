@@ -465,6 +465,215 @@ export class HolisticSearcher {
   }
 
   /**
+   * Check context before editing a file (Phase 5: Before-Edit Integration)
+   */
+  async checkBeforeEdit(filePath: string): Promise<{
+    filePath: string;
+    shouldProceed: boolean;
+    warnings: Array<{
+      type: "mistake" | "decision" | "requirement";
+      severity: "high" | "medium" | "low";
+      message: string;
+      details: string;
+      timestamp?: number;
+    }>;
+    context: {
+      recentDecisions: Array<{
+        decision: string;
+        rationale?: string;
+        timestamp: number;
+      }>;
+      pastMistakes: Array<{
+        mistake: string;
+        correction?: string;
+        howFixed?: string;
+        timestamp: number;
+      }>;
+      recentCommits: Array<{
+        hash: string;
+        message: string;
+        timestamp: number;
+      }>;
+      relatedConcepts: Array<{
+        name: string;
+        definition: string;
+        version: number;
+      }>;
+    };
+    summary: string;
+  }> {
+    const warnings: Array<{
+      type: "mistake" | "decision" | "requirement";
+      severity: "high" | "medium" | "low";
+      message: string;
+      details: string;
+      timestamp?: number;
+    }> = [];
+
+    // Get file-specific decisions
+    const decisionRows = this.db
+      .prepare(
+        `SELECT decision_text, rationale, timestamp, decision_type
+         FROM writing_decisions
+         WHERE file_path = ?
+         ORDER BY timestamp DESC
+         LIMIT 5`
+      )
+      .all(filePath) as Array<{
+      decision_text: string;
+      rationale: string | null;
+      timestamp: number;
+      decision_type: string | null;
+    }>;
+
+    const recentDecisions = decisionRows.map((row) => ({
+      decision: row.decision_text,
+      rationale: row.rationale || undefined,
+      timestamp: row.timestamp,
+    }));
+
+    // Add warnings for important decisions
+    for (const decision of decisionRows) {
+      if (
+        decision.decision_type === "structure" ||
+        decision.decision_type === "terminology"
+      ) {
+        warnings.push({
+          type: "decision",
+          severity: "medium",
+          message: `Previous ${decision.decision_type} decision exists`,
+          details: decision.decision_text,
+          timestamp: decision.timestamp,
+        });
+      }
+    }
+
+    // Get file-specific mistakes
+    const mistakeRows = this.db
+      .prepare(
+        `SELECT description, correction, how_fixed, timestamp, mistake_type
+         FROM writing_mistakes
+         WHERE file_path = ?
+         ORDER BY timestamp DESC
+         LIMIT 5`
+      )
+      .all(filePath) as Array<{
+      description: string;
+      correction: string | null;
+      how_fixed: string | null;
+      timestamp: number;
+      mistake_type: string;
+    }>;
+
+    const pastMistakes = mistakeRows.map((row) => ({
+      mistake: row.description,
+      correction: row.correction || undefined,
+      howFixed: row.how_fixed || undefined,
+      timestamp: row.timestamp,
+    }));
+
+    // Add high-priority warnings for recent mistakes
+    for (const mistake of mistakeRows) {
+      const daysSince = (Date.now() - mistake.timestamp) / (1000 * 60 * 60 * 24);
+      const severity = daysSince < 7 ? "high" : daysSince < 30 ? "medium" : "low";
+
+      warnings.push({
+        type: "mistake",
+        severity: severity as "high" | "medium" | "low",
+        message: `Past ${mistake.mistake_type} error in this file`,
+        details: mistake.description,
+        timestamp: mistake.timestamp,
+      });
+    }
+
+    // Get recent commits for the file
+    const commitRows = this.db
+      .prepare(
+        `SELECT commit_hash, message, timestamp
+         FROM manuscript_commits
+         WHERE files_changed LIKE ?
+         ORDER BY timestamp DESC
+         LIMIT 5`
+      )
+      .all(`%"${filePath}"%`) as Array<{
+      commit_hash: string;
+      message: string;
+      timestamp: number;
+    }>;
+
+    const recentCommits = commitRows.map((row) => ({
+      hash: row.commit_hash.substring(0, 8),
+      message: row.message,
+      timestamp: row.timestamp * 1000,
+    }));
+
+    // Get concepts mentioned in file
+    const conceptRows = this.db
+      .prepare(
+        `SELECT concept_name, definition, version_number
+         FROM concept_evolution
+         WHERE file_path = ?
+         ORDER BY version_number DESC
+         LIMIT 3`
+      )
+      .all(filePath) as Array<{
+      concept_name: string;
+      definition: string;
+      version_number: number;
+    }>;
+
+    const relatedConcepts = conceptRows.map((row) => ({
+      name: row.concept_name,
+      definition: row.definition,
+      version: row.version_number,
+    }));
+
+    // Generate summary
+    const summaryParts: string[] = [];
+    if (recentDecisions.length > 0) {
+      summaryParts.push(
+        `${recentDecisions.length} previous decision(s) recorded`
+      );
+    }
+    if (pastMistakes.length > 0) {
+      summaryParts.push(`${pastMistakes.length} past mistake(s) to avoid`);
+    }
+    if (recentCommits.length > 0) {
+      summaryParts.push(
+        `${recentCommits.length} recent commit(s) for context`
+      );
+    }
+    if (relatedConcepts.length > 0) {
+      summaryParts.push(`${relatedConcepts.length} concept(s) defined here`);
+    }
+
+    const summary =
+      summaryParts.length > 0
+        ? summaryParts.join(", ")
+        : "No prior context found for this file";
+
+    // Determine if editing should proceed with caution
+    const highSeverityWarnings = warnings.filter((w) => w.severity === "high");
+    const shouldProceed = highSeverityWarnings.length === 0;
+
+    return {
+      filePath,
+      shouldProceed,
+      warnings: warnings.sort((a, b) => {
+        const severityOrder = { high: 0, medium: 1, low: 2 };
+        return severityOrder[a.severity] - severityOrder[b.severity];
+      }),
+      context: {
+        recentDecisions,
+        pastMistakes,
+        recentCommits,
+        relatedConcepts,
+      },
+      summary,
+    };
+  }
+
+  /**
    * Get stats about indexed memory
    */
   getStats(): {

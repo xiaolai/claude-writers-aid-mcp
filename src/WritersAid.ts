@@ -769,6 +769,17 @@ export class WritersAid {
     return this.holisticSearcher.getFileContext(options.filePath);
   }
 
+  // ============================================================================
+  // Holistic Memory - Phase 5: Before-Edit Integration
+  // ============================================================================
+
+  /**
+   * Check context before editing a file
+   */
+  async checkBeforeEdit(options: { filePath: string }) {
+    return this.holisticSearcher.checkBeforeEdit(options.filePath);
+  }
+
   /**
    * Close storage connection
    */

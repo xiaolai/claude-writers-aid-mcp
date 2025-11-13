@@ -94,6 +94,10 @@ export class WriterToolHandlers {
       case "get_file_context":
         return this.getFileContext(args);
 
+      // Holistic Memory - Phase 5
+      case "check_before_edit":
+        return this.checkBeforeEdit(args);
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -499,6 +503,13 @@ export class WriterToolHandlers {
     const filePath = args.file_path as string;
 
     return this.writersAid.getFileContext({ filePath });
+  }
+
+  // Holistic Memory - Phase 5 Tools
+  private async checkBeforeEdit(args: Record<string, unknown>) {
+    const filePath = args.file_path as string;
+
+    return this.writersAid.checkBeforeEdit({ filePath });
   }
 
   /**

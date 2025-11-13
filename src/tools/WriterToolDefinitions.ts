@@ -546,4 +546,18 @@ export const writerToolDefinitions = [
       required: ["file_path"],
     },
   },
+
+  // Holistic Memory Tools - Phase 5: Before-Edit Integration (1)
+  {
+    name: "check_before_edit",
+    description: "Check context before editing a file - get warnings about past mistakes, decisions, and requirements to maintain consistency",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        file_path: { type: "string", description: "File to check before editing" },
+      },
+      required: ["file_path"],
+    },
+  },
 ];
