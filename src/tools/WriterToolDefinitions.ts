@@ -457,4 +457,55 @@ export const writerToolDefinitions = [
       required: ["category", "canonical_choice"],
     },
   },
+
+  // Holistic Memory Tools - Phase 3: Git Integration & Evolution (4)
+  {
+    name: "track_file_evolution",
+    description: "Show how a file evolved through git commits with rationale",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        file_path: { type: "string", description: "File to track evolution for" },
+        limit: { type: "number", description: "Maximum commits to return", default: 10 },
+      },
+      required: ["file_path"],
+    },
+  },
+  {
+    name: "track_concept_evolution",
+    description: "Track how a concept's definition evolved over time",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        concept_name: { type: "string", description: "Name of the concept to track" },
+      },
+      required: ["concept_name"],
+    },
+  },
+  {
+    name: "find_concept_contradictions",
+    description: "Detect contradictions in concept definitions across versions",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        concept_name: { type: "string", description: "Concept to check for contradictions" },
+      },
+      required: ["concept_name"],
+    },
+  },
+  {
+    name: "link_commits_to_sessions",
+    description: "Link git commits to writing sessions for context",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        since: { type: "string", description: "Start date (ISO format or relative)" },
+        limit: { type: "number", description: "Maximum commits to process", default: 20 },
+      },
+    },
+  },
 ];

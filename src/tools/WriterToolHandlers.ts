@@ -80,6 +80,14 @@ export class WriterToolHandlers {
       case "add_style_decision":
         return this.addStyleDecision(args);
 
+      // Holistic Memory - Phase 3
+      case "track_file_evolution":
+        return this.trackFileEvolution(args);
+      case "find_concept_contradictions":
+        return this.findConceptContradictions(args);
+      case "link_commits_to_sessions":
+        return this.linkCommitsToSessions(args);
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -110,16 +118,9 @@ export class WriterToolHandlers {
   }
 
   private async trackConceptEvolution(args: Record<string, unknown>) {
-    const concept = args.concept as string;
+    const conceptName = args.concept_name as string;
 
-    // Search for the concept across all files
-    const results = await this.writersAid.searchContent(concept);
-
-    return {
-      concept,
-      occurrences: results,
-      timeline: "Concept appears in multiple documents",
-    };
+    return this.writersAid.trackConceptEvolution({ conceptName });
   }
 
   private async findGaps(args: Record<string, unknown>) {
@@ -444,6 +445,27 @@ export class WriterToolHandlers {
       rationale,
       examples,
     });
+  }
+
+  // Holistic Memory - Phase 3 Tools
+  private async trackFileEvolution(args: Record<string, unknown>) {
+    const filePath = args.file_path as string;
+    const limit = (args.limit as number) || 10;
+
+    return this.writersAid.trackFileEvolution({ filePath, limit });
+  }
+
+  private async findConceptContradictions(args: Record<string, unknown>) {
+    const conceptName = args.concept_name as string;
+
+    return this.writersAid.findConceptContradictions({ conceptName });
+  }
+
+  private async linkCommitsToSessions(args: Record<string, unknown>) {
+    const since = args.since as string | undefined;
+    const limit = (args.limit as number) || 20;
+
+    return this.writersAid.linkCommitsToSessions({ since, limit });
   }
 
   /**

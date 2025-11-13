@@ -23,6 +23,8 @@ import { DecisionExtractor } from "./memory/DecisionExtractor.js";
 import { SessionIndexer } from "./memory/SessionIndexer.js";
 import { MistakeTracker } from "./memory/MistakeTracker.js";
 import { RequirementsManager } from "./memory/RequirementsManager.js";
+import { GitIntegrator } from "./memory/GitIntegrator.js";
+import { ConceptTracker } from "./memory/ConceptTracker.js";
 import fs from "fs";
 import path from "path";
 
@@ -52,6 +54,8 @@ export class WritersAid {
   private sessionIndexer: SessionIndexer;
   private mistakeTracker: MistakeTracker;
   private requirementsManager: RequirementsManager;
+  private gitIntegrator: GitIntegrator;
+  private conceptTracker: ConceptTracker;
 
   constructor(private config: WritersAidConfig) {
     // Determine database path
@@ -97,6 +101,8 @@ export class WritersAid {
     this.sessionIndexer = new SessionIndexer(sqliteManager);
     this.mistakeTracker = new MistakeTracker(sqliteManager);
     this.requirementsManager = new RequirementsManager(sqliteManager);
+    this.gitIntegrator = new GitIntegrator(sqliteManager, config.projectPath);
+    this.conceptTracker = new ConceptTracker(sqliteManager);
   }
 
   /**
@@ -607,6 +613,110 @@ export class WritersAid {
       canonicalChoice: decision.canonicalChoice,
       rationale: decision.rationale,
       examples: decision.examples,
+    };
+  }
+
+  // ============================================================================
+  // Git Integration & Evolution (Phase 3)
+  // ============================================================================
+
+  /**
+   * Track file evolution through git commits
+   */
+  async trackFileEvolution(options: { filePath: string; limit?: number }) {
+    const evolution = await this.gitIntegrator.getFileEvolution(options.filePath);
+    const limited = evolution.slice(0, options.limit || 10);
+
+    return {
+      filePath: options.filePath,
+      revisions: limited.map(({ revision, commit }) => ({
+        commitHash: commit.commitHash,
+        timestamp: new Date(commit.timestamp * 1000).toISOString(),
+        author: commit.author,
+        message: commit.message,
+        linesAdded: revision.linesAdded,
+        linesRemoved: revision.linesRemoved,
+        rationale: revision.rationale,
+        sessionLinked: !!commit.sessionId,
+      })),
+      total: evolution.length,
+    };
+  }
+
+  /**
+   * Track concept evolution over time
+   */
+  trackConceptEvolution(options: { conceptName: string }) {
+    const evolution = this.conceptTracker.getConceptEvolution(options.conceptName);
+
+    if (!evolution) {
+      return {
+        conceptName: options.conceptName,
+        found: false,
+        message: "No versions found for this concept",
+      };
+    }
+
+    return {
+      conceptName: evolution.conceptName,
+      found: true,
+      versions: evolution.versions.map((v) => ({
+        versionNumber: v.versionNumber,
+        definition: v.definition,
+        filePath: v.filePath,
+        timestamp: new Date(v.timestamp).toISOString(),
+        changeRationale: v.changeRationale,
+        commitHash: v.commitHash,
+      })),
+      totalVersions: evolution.totalVersions,
+      changeCount: evolution.changeCount,
+      firstDefinition: evolution.firstDefinition.definition,
+      latestDefinition: evolution.latestDefinition.definition,
+    };
+  }
+
+  /**
+   * Find concept contradictions
+   */
+  findConceptContradictions(options: { conceptName: string }) {
+    const contradictions = this.conceptTracker.findContradictions(options.conceptName);
+
+    return {
+      conceptName: options.conceptName,
+      contradictions: contradictions.map((c) => ({
+        version1: {
+          versionNumber: c.version1.versionNumber,
+          definition: c.version1.definition,
+          timestamp: new Date(c.version1.timestamp).toISOString(),
+        },
+        version2: {
+          versionNumber: c.version2.versionNumber,
+          definition: c.version2.definition,
+          timestamp: new Date(c.version2.timestamp).toISOString(),
+        },
+        contradiction: c.contradiction,
+      })),
+      total: contradictions.length,
+    };
+  }
+
+  /**
+   * Link commits to sessions
+   */
+  async linkCommitsToSessions(options?: { since?: string; limit?: number }) {
+    const since = options?.since ? new Date(options.since) : undefined;
+    const result = await this.gitIntegrator.indexCommits({
+      since,
+      filePattern: "**/*.md",
+    });
+
+    // Auto-link commits to sessions based on timestamp proximity
+    // (Future enhancement: use conversation files for precise linking)
+
+    return {
+      commitsIndexed: result.commitsIndexed,
+      revisionsCreated: result.revisionsCreated,
+      message: "Git commits indexed successfully",
     };
   }
 

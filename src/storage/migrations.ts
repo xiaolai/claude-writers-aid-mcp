@@ -162,6 +162,84 @@ export const migrations: Migration[] = [
       DROP TABLE IF EXISTS writing_mistakes;
     `,
   },
+  {
+    version: 4,
+    description: "Add holistic memory Phase 3: Git integration and concept evolution",
+    up: `
+      -- Manuscript commits (git history)
+      CREATE TABLE IF NOT EXISTS manuscript_commits (
+        commit_hash TEXT PRIMARY KEY,
+        timestamp INTEGER NOT NULL,
+        author TEXT,
+        message TEXT NOT NULL,
+        files_changed TEXT NOT NULL,
+        session_id TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES writing_sessions(id) ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_commit_timestamp ON manuscript_commits(timestamp);
+      CREATE INDEX IF NOT EXISTS idx_commit_session ON manuscript_commits(session_id);
+
+      -- File revision history
+      CREATE TABLE IF NOT EXISTS file_revisions (
+        id TEXT PRIMARY KEY,
+        file_path TEXT NOT NULL,
+        commit_hash TEXT NOT NULL,
+        lines_added INTEGER,
+        lines_removed INTEGER,
+        diff_summary TEXT,
+        rationale TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (commit_hash) REFERENCES manuscript_commits(commit_hash) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_revision_file ON file_revisions(file_path);
+      CREATE INDEX IF NOT EXISTS idx_revision_commit ON file_revisions(commit_hash);
+
+      -- Concept evolution over time
+      CREATE TABLE IF NOT EXISTS concept_evolution (
+        id TEXT PRIMARY KEY,
+        concept_name TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        version_number INTEGER NOT NULL,
+        definition TEXT NOT NULL,
+        context TEXT,
+        previous_version_id TEXT,
+        change_rationale TEXT,
+        timestamp INTEGER NOT NULL,
+        session_id TEXT,
+        commit_hash TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES writing_sessions(id) ON DELETE SET NULL,
+        FOREIGN KEY (commit_hash) REFERENCES manuscript_commits(commit_hash) ON DELETE SET NULL,
+        FOREIGN KEY (previous_version_id) REFERENCES concept_evolution(id) ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_concept_name ON concept_evolution(concept_name);
+      CREATE INDEX IF NOT EXISTS idx_concept_file ON concept_evolution(file_path);
+      CREATE INDEX IF NOT EXISTS idx_concept_timeline ON concept_evolution(concept_name, timestamp);
+      CREATE INDEX IF NOT EXISTS idx_concept_version ON concept_evolution(concept_name, version_number);
+
+      -- Concept embeddings for semantic search
+      CREATE TABLE IF NOT EXISTS concept_embeddings (
+        id TEXT PRIMARY KEY,
+        concept_id TEXT NOT NULL,
+        embedding BLOB NOT NULL,
+        model_name TEXT DEFAULT 'all-MiniLM-L6-v2',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (concept_id) REFERENCES concept_evolution(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_concept_embed ON concept_embeddings(concept_id);
+    `,
+    down: `
+      DROP TABLE IF EXISTS concept_embeddings;
+      DROP TABLE IF EXISTS concept_evolution;
+      DROP TABLE IF EXISTS file_revisions;
+      DROP TABLE IF EXISTS manuscript_commits;
+    `,
+  },
 ];
 
 export class MigrationManager {
