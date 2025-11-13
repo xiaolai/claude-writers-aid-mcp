@@ -335,7 +335,7 @@ export class HolisticSearcher {
     query: HolisticSearchQuery
   ): Promise<SearchResult[]> {
     // Full-text search in writing_memory_fts
-    let sql = `SELECT memory_id, text, metadata
+    const sql = `SELECT memory_id, text, metadata
                FROM writing_memory_fts
                WHERE memory_type = 'session' AND text MATCH ?
                LIMIT ?`;

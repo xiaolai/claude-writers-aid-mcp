@@ -152,7 +152,7 @@ export class SessionIndexer {
           files.push(fullPath);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Directory doesn't exist or not accessible
       return [];
     }
@@ -181,7 +181,7 @@ export class SessionIndexer {
               : undefined,
           });
         }
-      } catch (error) {
+      } catch (_error) {
         // Skip malformed lines
         continue;
       }
