@@ -129,8 +129,9 @@ export class WriterToolHandlers {
 
   private async trackConceptEvolution(args: Record<string, unknown>) {
     const conceptName = args.concept_name as string;
+    const limit = resolvePaginationLimit("track_concept_evolution", args.limit as number | undefined);
 
-    return this.writersAid.trackConceptEvolution({ conceptName });
+    return this.writersAid.trackConceptEvolution({ conceptName, limit });
   }
 
   private async findGaps(args: Record<string, unknown>) {
@@ -191,8 +192,10 @@ export class WriterToolHandlers {
   // Link Tools
   private async analyzeLinkGraph(args: Record<string, unknown>) {
     const format = (args.format as string) || "mermaid";
+    const scope = args.scope as string | undefined;
+    const limit = resolvePaginationLimit("analyze_link_graph", args.limit as number | undefined);
 
-    const links = await this.writersAid.checkLinks({});
+    const links = await this.writersAid.checkLinks({ scope, limit });
 
     if (format === "mermaid") {
       return {
@@ -214,10 +217,12 @@ export class WriterToolHandlers {
 
   private async suggestCrossReferences(args: Record<string, unknown>) {
     const minSimilarity = (args.min_similarity as number) || 0.7;
+    const limit = resolvePaginationLimit("suggest_cross_references", args.limit as number | undefined);
 
     // Find similar content that could be cross-referenced
     const duplicates = await this.writersAid.findDuplicates({
       similarityThreshold: minSimilarity,
+      limit,
     });
 
     return {

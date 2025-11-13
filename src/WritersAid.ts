@@ -659,7 +659,7 @@ export class WritersAid {
   /**
    * Track concept evolution over time
    */
-  trackConceptEvolution(options: { conceptName: string }) {
+  trackConceptEvolution(options: { conceptName: string; limit?: number }) {
     const evolution = this.conceptTracker.getConceptEvolution(options.conceptName);
 
     if (!evolution) {
@@ -670,10 +670,15 @@ export class WritersAid {
       };
     }
 
+    // Trim versions to limit (default handled by pagination resolver in handler)
+    const versionsToReturn = options.limit
+      ? evolution.versions.slice(0, options.limit)
+      : evolution.versions;
+
     return {
       conceptName: evolution.conceptName,
       found: true,
-      versions: evolution.versions.map((v) => ({
+      versions: versionsToReturn.map((v) => ({
         versionNumber: v.versionNumber,
         definition: v.definition,
         filePath: v.filePath,
