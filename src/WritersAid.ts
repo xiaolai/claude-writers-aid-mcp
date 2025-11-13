@@ -25,6 +25,7 @@ import { MistakeTracker } from "./memory/MistakeTracker.js";
 import { RequirementsManager } from "./memory/RequirementsManager.js";
 import { GitIntegrator } from "./memory/GitIntegrator.js";
 import { ConceptTracker } from "./memory/ConceptTracker.js";
+import { HolisticSearcher } from "./memory/HolisticSearcher.js";
 import fs from "fs";
 import path from "path";
 
@@ -56,6 +57,7 @@ export class WritersAid {
   private requirementsManager: RequirementsManager;
   private gitIntegrator: GitIntegrator;
   private conceptTracker: ConceptTracker;
+  private holisticSearcher: HolisticSearcher;
 
   constructor(private config: WritersAidConfig) {
     // Determine database path
@@ -103,6 +105,17 @@ export class WritersAid {
     this.requirementsManager = new RequirementsManager(sqliteManager);
     this.gitIntegrator = new GitIntegrator(sqliteManager, config.projectPath);
     this.conceptTracker = new ConceptTracker(sqliteManager);
+
+    // Initialize unified search
+    this.holisticSearcher = new HolisticSearcher(
+      sqliteManager,
+      this.search,
+      this.sessionManager,
+      this.decisionExtractor,
+      this.mistakeTracker,
+      this.conceptTracker,
+      this.gitIntegrator
+    );
   }
 
   /**
@@ -718,6 +731,42 @@ export class WritersAid {
       revisionsCreated: result.revisionsCreated,
       message: "Git commits indexed successfully",
     };
+  }
+
+  // ============================================================================
+  // Holistic Memory - Phase 4: Unified Search
+  // ============================================================================
+
+  /**
+   * Unified search across all memory layers
+   */
+  async holisticSearch(options: {
+    query: string;
+    layers?: Array<"content" | "decisions" | "mistakes" | "concepts" | "sessions" | "commits">;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    minRelevance?: number;
+  }) {
+    const dateRange = {
+      start: options.startDate ? new Date(options.startDate) : undefined,
+      end: options.endDate ? new Date(options.endDate) : undefined,
+    };
+
+    return this.holisticSearcher.search({
+      query: options.query,
+      layers: options.layers,
+      dateRange,
+      limit: options.limit,
+      minRelevance: options.minRelevance,
+    });
+  }
+
+  /**
+   * Get all context for a file (sessions, decisions, mistakes, commits)
+   */
+  async getFileContext(options: { filePath: string }) {
+    return this.holisticSearcher.getFileContext(options.filePath);
   }
 
   /**

@@ -508,4 +508,42 @@ export const writerToolDefinitions = [
       },
     },
   },
+
+  // Holistic Memory Tools - Phase 4: Unified Search (2)
+  {
+    name: "holistic_search",
+    description: "Unified search across all memory layers (content, decisions, mistakes, concepts, sessions, commits)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        query: { type: "string", description: "Search query" },
+        layers: {
+          type: "array",
+          items: {
+            type: "string",
+            enum: ["content", "decisions", "mistakes", "concepts", "sessions", "commits"],
+          },
+          description: "Memory layers to search (default: all)",
+        },
+        start_date: { type: "string", description: "Filter results after this date (ISO format or relative)" },
+        end_date: { type: "string", description: "Filter results before this date (ISO format or relative)" },
+        limit: { type: "number", description: "Maximum results to return", default: 20 },
+        min_relevance: { type: "number", description: "Minimum relevance score (0-1)", default: 0 },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "get_file_context",
+    description: "Get all context for a file (sessions, decisions, mistakes, commits)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project_path: { type: "string", description: "Path to manuscript directory (defaults to current directory)" },
+        file_path: { type: "string", description: "File to get context for" },
+      },
+      required: ["file_path"],
+    },
+  },
 ];

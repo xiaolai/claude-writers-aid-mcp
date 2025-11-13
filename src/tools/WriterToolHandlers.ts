@@ -88,6 +88,12 @@ export class WriterToolHandlers {
       case "link_commits_to_sessions":
         return this.linkCommitsToSessions(args);
 
+      // Holistic Memory - Phase 4
+      case "holistic_search":
+        return this.holisticSearch(args);
+      case "get_file_context":
+        return this.getFileContext(args);
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -466,6 +472,33 @@ export class WriterToolHandlers {
     const limit = (args.limit as number) || 20;
 
     return this.writersAid.linkCommitsToSessions({ since, limit });
+  }
+
+  // Holistic Memory - Phase 4 Tools
+  private async holisticSearch(args: Record<string, unknown>) {
+    const query = args.query as string;
+    const layers = args.layers as Array<
+      "content" | "decisions" | "mistakes" | "concepts" | "sessions" | "commits"
+    > | undefined;
+    const startDate = args.start_date as string | undefined;
+    const endDate = args.end_date as string | undefined;
+    const limit = (args.limit as number) || 20;
+    const minRelevance = (args.min_relevance as number) || 0;
+
+    return this.writersAid.holisticSearch({
+      query,
+      layers,
+      startDate,
+      endDate,
+      limit,
+      minRelevance,
+    });
+  }
+
+  private async getFileContext(args: Record<string, unknown>) {
+    const filePath = args.file_path as string;
+
+    return this.writersAid.getFileContext({ filePath });
   }
 
   /**
